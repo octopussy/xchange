@@ -9,6 +9,7 @@ import android.view.MenuItem
 import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
+import android.widget.Toast
 import com.github.op.xchange.R
 import com.github.op.xchange.entity.Currency
 import com.github.op.xchange.injection.ViewModelFactory
@@ -84,13 +85,8 @@ class MainActivity : BaseActivity() {
     }
 
     private fun setupObservers() {
-        viewModel.state.observe(this, Observer { state ->
-            hideAll()
-            when (state) {
-                is MainViewModel.MainState.LoadingCurrencies -> progressBar.visible = true
-                is MainViewModel.MainState.Loaded -> content.visible = true
-                is MainViewModel.MainState.Error -> errorLayout.visible = true
-            }
+        viewModel.lastRateValue.observe(this, Observer { value ->
+            lastRateValueTextView.text = value
         })
 
         viewModel.rateHistory.observe(this, Observer { list ->
@@ -98,20 +94,31 @@ class MainActivity : BaseActivity() {
             list?.forEach { textView.append("$it\n") }
         })
 
-        viewModel.baseCurrencySpinnerState.observe(this, Observer { state ->
-            baseCurrencyAdapter.clear()
-            baseCurrencyAdapter.addAll(state!!.list)
-            val pos = baseCurrencyAdapter.getPosition(state.selectedCurrency)
-            firstCurrencySpinner.setSelection(pos)
-        })
+        viewModel.selectedCurrenciesLiveData.observe(this, Observer {
+            hideAll()
+            when (it) {
+                is SelectedCurrenciesLiveData.State.Error -> {
+                    errorLayout.visible = true
+                    Toast.makeText(this, it.throwable.localizedMessage, Toast.LENGTH_LONG).show()
+                }
 
-        viewModel.relCurrencySpinnerState.observe(this, Observer { state ->
-            relCurrencyAdapter.clear()
-            relCurrencyAdapter.addAll(state!!.list)
-            val pos = relCurrencyAdapter.getPosition(state.selectedCurrency)
-            secondCurrencySpinner.setSelection(pos)
-        })
+                is SelectedCurrenciesLiveData.State.Loading -> progressBar.visible = true
 
+                is SelectedCurrenciesLiveData.State.Success -> {
+                    content.visible = true
+
+                    baseCurrencyAdapter.clear()
+                    baseCurrencyAdapter.addAll(it.baseList)
+                    val pos1 = baseCurrencyAdapter.getPosition(it.selection.first)
+                    firstCurrencySpinner.setSelection(pos1)
+
+                    relCurrencyAdapter.clear()
+                    relCurrencyAdapter.addAll(it.relList)
+                    val pos2 = relCurrencyAdapter.getPosition(it.selection.second)
+                    secondCurrencySpinner.setSelection(pos2)
+                }
+            }
+        })
     }
 
     private fun hideAll() {

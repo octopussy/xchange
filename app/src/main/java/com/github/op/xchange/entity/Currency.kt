@@ -4,6 +4,8 @@ import android.arch.persistence.room.Entity
 import android.arch.persistence.room.PrimaryKey
 import com.github.op.xchange.entity.Currency.Companion.TABLE_NAME
 
+typealias CurrencyPair = Pair<Currency, Currency>
+
 @Entity(tableName = TABLE_NAME)
 data class Currency(@PrimaryKey val code: String) {
 

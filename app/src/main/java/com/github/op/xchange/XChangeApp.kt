@@ -4,6 +4,7 @@ import android.app.Application
 import com.github.op.xchange.injection.DaggerXComponent
 import com.github.op.xchange.injection.XComponent
 import com.github.op.xchange.injection.AppModule
+import com.jakewharton.threetenabp.AndroidThreeTen
 
 class XChangeApp : Application() {
 
@@ -12,6 +13,7 @@ class XChangeApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        AndroidThreeTen.init(this)
         _component = DaggerXComponent.builder().appModule(AppModule(this)).build()
     }
 }

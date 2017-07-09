@@ -2,24 +2,28 @@ package com.github.op.xchange.repository
 
 import android.arch.lifecycle.LiveData
 import com.github.op.xchange.entity.Currency
+import com.github.op.xchange.entity.CurrencyPair
 import com.github.op.xchange.entity.RateEntry
 import io.reactivex.Completable
+import io.reactivex.Observable
 
 /**
  * @author mcpussy
  * @date 08/07/2017
  */
-interface XChangeRepository {
+interface XChangeRepository : CurrenciesDataSource {
 
-    val selectedCurrencyPair: LiveData<Pair<Currency, Currency>>
+    val selectedCurrencyPair: LiveData<CurrencyPair>
 
     val availableCurrencies: LiveData<CurrenciesData>
 
-    fun getRateHistory(currencyPair: Pair<Currency, Currency>): LiveData<List<RateEntry>>
+    val selectedCurrencyPair2: Observable<CurrencyPair>
 
-    fun updateRateHistory(currencyPair: Pair<Currency, Currency>)
+    fun getRateHistory(currencyPair: CurrencyPair): LiveData<List<RateEntry>>
 
-    fun updateCurrencies()
+    fun getRateHistory2(currencyPair: CurrencyPair): Observable<List<RateEntry>>
+
+    fun refreshAvailableCurrencies()
 
     fun selectBaseCurrency(currency: Currency)
 

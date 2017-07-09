@@ -1,17 +1,39 @@
 package com.github.op.xchange
 
-import java.util.*
+import android.arch.lifecycle.MediatorLiveData
+import com.google.gson.TypeAdapter
+import com.google.gson.stream.JsonReader
+import com.google.gson.stream.JsonWriter
+import io.reactivex.disposables.Disposable
+import org.threeten.bp.LocalDate
+import org.threeten.bp.format.DateTimeFormatter
 
+class LocalDateGsonTypeAdapter : TypeAdapter<LocalDate>() {
+    override fun read(`in`: JsonReader): LocalDate = LocalDate.parse(`in`.nextString(), DateTimeFormatter.ISO_LOCAL_DATE)
+
+    override fun write(out: JsonWriter, value: LocalDate) {
+        out.beginObject().jsonValue(value.format(DateTimeFormatter.ISO_LOCAL_DATE)).endObject()
+    }
+}
 
 /*
-fun getAvailableCurrencies(): Map<String, String> {
-    val m = mutableMapOf<String, String>()
-    for (l in Locale.getAvailableLocales()) {
-        try {
-            val curr = Currency.getInstance(l)
-            m.put(curr.currencyCode, curr.displayName)
-        } catch (ignore: IllegalArgumentException) {
+abstract class RxMediatorLiveData<T> : MediatorLiveData<T>() {
+    private var disposable: Disposable? = null
+
+    override fun onActive() {
+        super.onActive()
+        if (disposable == null) {
+            subscribe()
         }
     }
-    return m
-}*/
+
+    override fun onInactive() {
+        super.onInactive()
+        unsubscribe()
+        disposable?.dispose()
+        disposable = null
+    }
+
+    abstract fun subscribe()
+    abstract fun unsubscribe()
+} */

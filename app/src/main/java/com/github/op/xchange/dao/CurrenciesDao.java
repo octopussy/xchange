@@ -14,11 +14,17 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+import io.reactivex.Flowable;
+import io.reactivex.Observable;
+
 @Dao
 public interface CurrenciesDao {
 
     @Query("SELECT * FROM " + Currency.TABLE_NAME)
     LiveData<List<Currency>> getCurrencies();
+
+    @Query("SELECT * FROM " + Currency.TABLE_NAME)
+    List<Currency> getCurrencies2();
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void setCurrencies(@NotNull List<Currency> list);

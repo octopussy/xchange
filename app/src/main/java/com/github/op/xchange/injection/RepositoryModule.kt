@@ -6,6 +6,8 @@ import com.f2prateek.rx.preferences2.RxSharedPreferences
 import com.github.op.xchange.BuildConfig
 import com.github.op.xchange.api.FixerApi
 import com.github.op.xchange.db.XChangeDatabase
+import com.github.op.xchange.repository.LocalCurrenciesDataSource
+import com.github.op.xchange.repository.RemoteCurrenciesDataSource
 import com.github.op.xchange.repository.XChangeRepository
 import com.github.op.xchange.repository.XChangeRepositoryImpl
 import com.google.gson.Gson
@@ -23,7 +25,7 @@ class RepositoryModule {
 
     @Provides @Singleton
     fun repository(fixerApi: FixerApi, db: XChangeDatabase, rxPrefs: RxSharedPreferences): XChangeRepository
-            = XChangeRepositoryImpl(fixerApi, db, rxPrefs)
+            = XChangeRepositoryImpl(fixerApi, db, rxPrefs, LocalCurrenciesDataSource(db), RemoteCurrenciesDataSource(fixerApi))
 
     @Provides @Singleton
     fun fixerRestApi(gson: Gson): FixerApi {
