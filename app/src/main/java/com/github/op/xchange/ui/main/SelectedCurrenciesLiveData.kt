@@ -22,12 +22,7 @@ class SelectedCurrenciesLiveData(val repository: XChangeRepository)
         class Error(val throwable: Throwable) : State()
     }
 
-
     private var disposable: Disposable? = null
-
-    init {
-        subscribe()
-    }
 
     override fun onActive() {
         super.onActive()
@@ -39,7 +34,10 @@ class SelectedCurrenciesLiveData(val repository: XChangeRepository)
     override fun onInactive() {
         super.onInactive()
         unsubscribe()
-        disposable = null
+        if (!hasObservers()) {
+            disposable?.dispose()
+            disposable = null
+        }
     }
 
     private fun subscribe() {
@@ -70,6 +68,5 @@ class SelectedCurrenciesLiveData(val repository: XChangeRepository)
     }
 
     private fun unsubscribe() {
-        disposable?.dispose()
     }
 }

@@ -86,12 +86,18 @@ class MainActivity : BaseActivity() {
 
     private fun setupObservers() {
         viewModel.lastRateValue.observe(this, Observer { value ->
-            lastRateValueTextView.text = value
+            lastRateValueTextView.text = value.toString()
         })
 
-        viewModel.rateHistory.observe(this, Observer { list ->
+        viewModel.rateHistory2.observe(this, Observer {
             textView.text = ""
-            list?.forEach { textView.append("$it\n") }
+            when (it) {
+                is RatesLiveData.State.Loading -> {}
+                is RatesLiveData.State.Error -> {}
+                is RatesLiveData.State.Success -> {
+                    it.list.forEach { textView.append("$it\n") }
+                }
+            }
         })
 
         viewModel.selectedCurrenciesLiveData.observe(this, Observer {
