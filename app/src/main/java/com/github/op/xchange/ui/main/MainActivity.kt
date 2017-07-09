@@ -1,24 +1,29 @@
-package com.github.op.xchange.ui
+package com.github.op.xchange.ui.main
 
 import android.arch.lifecycle.Observer
 import android.arch.lifecycle.ViewModelProviders
+import android.content.Intent
 import android.os.Bundle
+import android.view.Menu
+import android.view.MenuItem
 import android.view.View
 import android.widget.AdapterView
-import com.github.op.xchange.R
-import com.github.op.xchange.injection.ViewModelFactory
-import kotlinx.android.synthetic.main.activity_main.*
 import android.widget.ArrayAdapter
+import com.github.op.xchange.R
 import com.github.op.xchange.entity.Currency
+import com.github.op.xchange.injection.ViewModelFactory
+import com.github.op.xchange.ui.BaseActivity
+import com.github.op.xchange.ui.settings.SettingsActivity
+import kotlinx.android.synthetic.main.activity_main.*
 
 
 class MainActivity : BaseActivity() {
 
     private lateinit var viewModel: MainViewModel
 
-    private lateinit var firstAdapter: ArrayAdapter<Currency>
+    private lateinit var baseCurrencyAdapter: ArrayAdapter<Currency>
 
-    private lateinit var secondAdapter: ArrayAdapter<Currency>
+    private lateinit var relCurrencyAdapter: ArrayAdapter<Currency>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -30,16 +35,31 @@ class MainActivity : BaseActivity() {
         setupObservers()
     }
 
-    private fun setupView() {
-        firstAdapter = ArrayAdapter<Currency>(this, android.R.layout.simple_spinner_item).apply {
-            setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        }
-        firstCurrencySpinner.adapter = firstAdapter
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        menuInflater.inflate(R.menu.main_menu, menu)
+        return true
+    }
 
-        secondAdapter = ArrayAdapter<Currency>(this, android.R.layout.simple_spinner_item).apply {
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.menuItemSettings -> {
+                startActivity(Intent(this, SettingsActivity::class.java))
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
+    }
+
+    private fun setupView() {
+        baseCurrencyAdapter = ArrayAdapter<Currency>(this, android.R.layout.simple_spinner_item).apply {
             setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         }
-        secondCurrencySpinner.adapter = secondAdapter
+        firstCurrencySpinner.adapter = baseCurrencyAdapter
+
+        relCurrencyAdapter = ArrayAdapter<Currency>(this, android.R.layout.simple_spinner_item).apply {
+            setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        }
+        secondCurrencySpinner.adapter = relCurrencyAdapter
 
         firstCurrencySpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onNothingSelected(parent: AdapterView<*>?) {}
@@ -57,7 +77,6 @@ class MainActivity : BaseActivity() {
                 val item = parent.adapter.getItem(position)
                 viewModel.selectRelatedCurrency(item as Currency)
             }
-
         }
     }
 
@@ -68,16 +87,16 @@ class MainActivity : BaseActivity() {
         })
 
         viewModel.firstCurrencyState.observe(this, Observer { state ->
-            firstAdapter.clear()
-            firstAdapter.addAll(state!!.list)
-            val pos = firstAdapter.getPosition(state.selectedCurrency)
+            baseCurrencyAdapter.clear()
+            baseCurrencyAdapter.addAll(state!!.list)
+            val pos = baseCurrencyAdapter.getPosition(state.selectedCurrency)
             firstCurrencySpinner.setSelection(pos)
         })
 
         viewModel.secondCurrencyState.observe(this, Observer { state ->
-            secondAdapter.clear()
-            secondAdapter.addAll(state!!.list)
-            val pos = secondAdapter.getPosition(state.selectedCurrency)
+            relCurrencyAdapter.clear()
+            relCurrencyAdapter.addAll(state!!.list)
+            val pos = relCurrencyAdapter.getPosition(state.selectedCurrency)
             secondCurrencySpinner.setSelection(pos)
         })
 

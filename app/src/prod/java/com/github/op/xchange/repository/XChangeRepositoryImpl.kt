@@ -8,6 +8,7 @@ import com.github.op.xchange.db.XChangeDatabase
 import com.github.op.xchange.entity.Currency
 import com.github.op.xchange.entity.RateEntry
 import io.reactivex.BackpressureStrategy
+import io.reactivex.Completable
 import io.reactivex.Observable
 import io.reactivex.functions.BiFunction
 import io.reactivex.schedulers.Schedulers
@@ -36,7 +37,7 @@ class XChangeRepositoryImpl(private val fixerApi: FixerApi,
         get() = _availableCurrencies
 
     init {
-        loadCurrencies()
+        observeCurrencies()
     }
 
     override fun selectBaseCurrency(currency: Currency) = baseCurrencyCode.set(currency.code)
@@ -62,6 +63,12 @@ class XChangeRepositoryImpl(private val fixerApi: FixerApi,
                 })
     }
 
+    override fun clearData(): Completable = Completable.fromAction {
+        db.ratesDao().deleteAllRates()
+        db.currenciesDao().deleteAllCurrencies()
+    }
+
+
     private fun loadCurrenciesFromServer(): LiveData<FixerResponse> {
         val serverCall = LiveDataReactiveStreams.fromPublisher(
                 fixerApi.defaultCall()
@@ -71,27 +78,27 @@ class XChangeRepositoryImpl(private val fixerApi: FixerApi,
         return serverCall
     }
 
-    private fun loadCurrencies() {
+    private fun observeCurrencies() {
         val dbSource = db.currenciesDao().currencies
         with(_availableCurrencies) {
-            value = CurrenciesData.Loading
+            postValue(CurrenciesData.Loading)
+
             addSource(dbSource) {
-                removeSource(dbSource)
-
-                if (it != null) {
-                    _availableCurrencies.value = CurrenciesData.Loaded(it)
-                }
-
-                val netCall = loadCurrenciesFromServer()
-                addSource(netCall) {
-                    removeSource(netCall)
-                    if (it != null && it != FixerResponse.ERROR) {
-                        val list = it.toCurrencyList()
-                        _availableCurrencies.value = CurrenciesData.Loaded(list)
-                        executor.execute {
-                            db.currenciesDao().setCurrencies(list)
+                if (it == null || it.isEmpty()) {
+                    removeSource(dbSource)
+                    val netCall = loadCurrenciesFromServer()
+                    addSource(netCall) {
+                        removeSource(netCall)
+                        if (it != null && it != FixerResponse.ERROR) {
+                            val list = it.toCurrencyList()
+                            executor.execute {
+                                db.currenciesDao().setCurrencies(list)
+                                observeCurrencies()
+                            }
                         }
                     }
+                } else {
+                    postValue(CurrenciesData.Loaded(it))
                 }
             }
         }

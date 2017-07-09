@@ -21,4 +21,7 @@ public interface CurrenciesDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void setCurrencies(@NotNull List<Currency> list);
+
+    @Query("DELETE FROM " + Currency.TABLE_NAME)
+    void deleteAllCurrencies();
 }

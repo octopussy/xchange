@@ -2,12 +2,15 @@ package com.github.op.xchange.dao;
 
 import android.arch.lifecycle.LiveData;
 import android.arch.persistence.room.Dao;
+import android.arch.persistence.room.Delete;
 import android.arch.persistence.room.Insert;
 import android.arch.persistence.room.Query;
 
 import com.github.op.xchange.entity.RateEntry;
 
 import java.util.List;
+
+import io.reactivex.Flowable;
 
 @Dao
 public interface RatesDao {
@@ -19,4 +22,7 @@ public interface RatesDao {
 
     @Insert
     void addRate(RateEntry rate);
+
+    @Query("DELETE FROM " + RateEntry.TABLE_NAME)
+    void deleteAllRates();
 }

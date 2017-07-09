@@ -22,10 +22,6 @@ import javax.inject.Singleton
 class RepositoryModule {
 
     @Provides @Singleton
-    fun db(context: Context): XChangeDatabase
-            = Room.databaseBuilder(context, XChangeDatabase::class.java, "xchange_db").build()
-
-    @Provides @Singleton
     fun repository(fixerApi: FixerApi, db: XChangeDatabase, rxPrefs: RxSharedPreferences): XChangeRepository
             = XChangeRepositoryImpl(fixerApi, db, rxPrefs)
 

@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">XChange</string>
+    <string name="btn_wipe_db">Wipe DB</string>
+    <string name="menu_settings">Settings</string>
+    <string name="data_wiped">data wiped</string>
+    <string name="error">error</string>
 </resources>

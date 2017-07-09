@@ -3,6 +3,7 @@ package com.github.op.xchange.repository
 import android.arch.lifecycle.LiveData
 import com.github.op.xchange.entity.Currency
 import com.github.op.xchange.entity.RateEntry
+import io.reactivex.Completable
 
 /**
  * @author mcpussy
@@ -21,4 +22,6 @@ interface XChangeRepository {
     fun selectBaseCurrency(currency: Currency)
 
     fun selectRelatedCurrency(currency: Currency)
+
+    fun clearData(): Completable
 }
