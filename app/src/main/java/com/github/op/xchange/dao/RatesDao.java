@@ -22,13 +22,16 @@ import io.reactivex.Flowable;
 public interface RatesDao {
 
     @Query(DaoHelper.QUERY_RATE_LIST)
-    LiveData<List<RateEntry>> getRates(String baseCode, String relatedCode);
-
-    @Query(DaoHelper.QUERY_RATE_LIST)
-    Flowable<List<RateEntry>> getRates2(String baseCode, String relatedCode);
+    Flowable<List<RateEntry>> getRates(String baseCode, String relatedCode);
 
     @Query(DaoHelper.QUERY_RATE_LIST + " LIMIT 1")
-    @Nullable RateEntry getLastRateSync(String baseCode, String relatedCode);
+    RateEntry getLatestRateSync(String baseCode, String relatedCode);
+
+    @Query(DaoHelper.QUERY_RATE_LIST + " LIMIT 1")
+    LiveData<RateEntry> getLatestRateLiveData(String baseCode, String relatedCode);
+
+    @Query(DaoHelper.QUERY_RATE_LIST + " LIMIT 1")
+    Flowable<RateEntry> getLatestRate(String baseCode, String relatedCode);
 
     @Insert
     void addRate(@NotNull RateEntry rate);

@@ -85,16 +85,15 @@ class MainActivity : BaseActivity() {
     }
 
     private fun setupObservers() {
-        viewModel.lastRateValue.observe(this, Observer { value ->
-            lastRateValueTextView.text = value.toString()
-        })
-
-        viewModel.rateHistory2.observe(this, Observer {
+        viewModel.rateHistoryLiveData.observe(this, Observer {
             textView.text = ""
+            lastRateValueTextView.visible = false
             when (it) {
                 is RatesLiveData.State.Loading -> {}
-                is RatesLiveData.State.Error -> {}
+                is RatesLiveData.State.Error -> showError(it.throwable)
                 is RatesLiveData.State.Success -> {
+                    lastRateValueTextView.visible = true
+                    lastRateValueTextView.text = it.latestRate.rate.toString()
                     it.list.forEach { textView.append("$it\n") }
                 }
             }
@@ -105,7 +104,7 @@ class MainActivity : BaseActivity() {
             when (it) {
                 is SelectedCurrenciesLiveData.State.Error -> {
                     errorLayout.visible = true
-                    Toast.makeText(this, it.throwable.localizedMessage, Toast.LENGTH_LONG).show()
+                    showError(it.throwable)
                 }
 
                 is SelectedCurrenciesLiveData.State.Loading -> progressBar.visible = true
@@ -125,6 +124,10 @@ class MainActivity : BaseActivity() {
                 }
             }
         })
+    }
+
+    private fun showError(th: Throwable) {
+        Toast.makeText(this, th.localizedMessage, Toast.LENGTH_LONG).show()
     }
 
     private fun hideAll() {

@@ -42,7 +42,7 @@ class SelectedCurrenciesLiveData(val repository: XChangeRepository)
 
     private fun subscribe() {
         value = State.Loading
-        repository.getAvailableCurrencies2()
+        repository.getAvailableCurrencies()
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe { result, error ->
@@ -57,7 +57,7 @@ class SelectedCurrenciesLiveData(val repository: XChangeRepository)
 
     private fun subscribeToSelection() {
         unsubscribe()
-        disposable = repository.selectedCurrencyPair2
+        disposable = repository.selectedCurrencyPair
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe({

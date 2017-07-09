@@ -13,17 +13,13 @@ import io.reactivex.Observable
  */
 interface XChangeRepository : CurrenciesDataSource {
 
-    val selectedCurrencyPair: LiveData<CurrencyPair>
+    val selectedCurrencyPair: Observable<CurrencyPair>
 
-    val availableCurrencies: LiveData<CurrenciesData>
+    fun getLatestRateValue(currencyPair: CurrencyPair): LiveData<RateEntry>
 
-    val selectedCurrencyPair2: Observable<CurrencyPair>
+    fun getLatestRateValue2(currencyPair: CurrencyPair): Observable<RateEntry>
 
-    fun getRateHistory(currencyPair: CurrencyPair): LiveData<List<RateEntry>>
-
-    fun getRateHistory2(currencyPair: CurrencyPair): Observable<List<RateEntry>>
-
-    fun refreshAvailableCurrencies()
+    fun getRateHistory(currencyPair: CurrencyPair): Observable<List<RateEntry>>
 
     fun selectBaseCurrency(currency: Currency)
 

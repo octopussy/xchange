@@ -1,6 +1,5 @@
 package com.github.op.xchange.ui.main
 
-import android.arch.lifecycle.MediatorLiveData
 import android.arch.lifecycle.ViewModel
 import com.github.op.xchange.entity.Currency
 import com.github.op.xchange.injection.XComponent
@@ -13,7 +12,7 @@ class MainViewModel : ViewModel(), XComponent.Injectable {
 
     val selectedCurrenciesLiveData by lazy { SelectedCurrenciesLiveData(repository) }
 
-    val rateHistory2 by lazy {
+    val rateHistoryLiveData by lazy {
         RatesLiveData(repository).apply {
             addSource(selectedCurrenciesLiveData) {
                 it?.let {
@@ -27,31 +26,14 @@ class MainViewModel : ViewModel(), XComponent.Injectable {
         }
     }
 
-    val lastRateValue by lazy {
-        MediatorLiveData<Float>().apply {
-            addSource(rateHistory2) {
-                if (it is RatesLiveData.State.Success) {
-                    value = it.list.maxBy { it.date }?.rate
-                }
-            }
-        }
-    }
-
     fun selectBaseCurrency(currency: Currency) = repository.selectBaseCurrency(currency)
 
     fun selectRelatedCurrency(currency: Currency) = repository.selectRelatedCurrency(currency)
 
-    override fun inject(component: XComponent) {
-        component.inject(this)
-
-        /*_lastRateValue.addSource(_rateHistory) {
-            if (it != null && it.isNotEmpty()) {
-                _lastRateValue.postValue(it.first().rate.toString())
-            }
-        }*/
+    fun retryLoading() {
     }
 
-    fun retryLoading() {
-        repository.refreshAvailableCurrencies()
+    override fun inject(component: XComponent) {
+        component.inject(this)
     }
 }

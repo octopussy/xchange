@@ -5,7 +5,7 @@ import com.github.op.xchange.entity.Currency
 import io.reactivex.Single
 
 class LocalCurrenciesDataSource(private val db: XChangeDatabase) : CurrenciesDataSource {
-    override fun getAvailableCurrencies2(): Single<List<Currency>> {
+    override fun getAvailableCurrencies(): Single<List<Currency>> {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
