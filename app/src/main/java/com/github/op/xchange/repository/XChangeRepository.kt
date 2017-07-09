@@ -19,6 +19,8 @@ interface XChangeRepository {
 
     fun updateRateHistory(currencyPair: Pair<Currency, Currency>)
 
+    fun updateCurrencies()
+
     fun selectBaseCurrency(currency: Currency)
 
     fun selectRelatedCurrency(currency: Currency)

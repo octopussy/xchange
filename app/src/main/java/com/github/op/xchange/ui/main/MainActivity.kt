@@ -14,6 +14,7 @@ import com.github.op.xchange.entity.Currency
 import com.github.op.xchange.injection.ViewModelFactory
 import com.github.op.xchange.ui.BaseActivity
 import com.github.op.xchange.ui.settings.SettingsActivity
+import com.github.op.xchange.ui.visible
 import kotlinx.android.synthetic.main.activity_main.*
 
 
@@ -78,27 +79,44 @@ class MainActivity : BaseActivity() {
                 viewModel.selectRelatedCurrency(item as Currency)
             }
         }
+
+        btnRetry.setOnClickListener { viewModel.retryLoading() }
     }
 
     private fun setupObservers() {
+        viewModel.state.observe(this, Observer { state ->
+            hideAll()
+            when (state) {
+                is MainViewModel.MainState.LoadingCurrencies -> progressBar.visible = true
+                is MainViewModel.MainState.Loaded -> content.visible = true
+                is MainViewModel.MainState.Error -> errorLayout.visible = true
+            }
+        })
+
         viewModel.rateHistory.observe(this, Observer { list ->
             textView.text = ""
             list?.forEach { textView.append("$it\n") }
         })
 
-        viewModel.firstCurrencyState.observe(this, Observer { state ->
+        viewModel.baseCurrencySpinnerState.observe(this, Observer { state ->
             baseCurrencyAdapter.clear()
             baseCurrencyAdapter.addAll(state!!.list)
             val pos = baseCurrencyAdapter.getPosition(state.selectedCurrency)
             firstCurrencySpinner.setSelection(pos)
         })
 
-        viewModel.secondCurrencyState.observe(this, Observer { state ->
+        viewModel.relCurrencySpinnerState.observe(this, Observer { state ->
             relCurrencyAdapter.clear()
             relCurrencyAdapter.addAll(state!!.list)
             val pos = relCurrencyAdapter.getPosition(state.selectedCurrency)
             secondCurrencySpinner.setSelection(pos)
         })
 
+    }
+
+    private fun hideAll() {
+        errorLayout.visible = false
+        progressBar.visible = false
+        content.visible = false
     }
 }

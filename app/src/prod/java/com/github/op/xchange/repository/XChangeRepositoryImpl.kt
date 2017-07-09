@@ -37,7 +37,7 @@ class XChangeRepositoryImpl(private val fixerApi: FixerApi,
         get() = _availableCurrencies
 
     init {
-        observeCurrencies()
+        updateCurrencies()
     }
 
     override fun selectBaseCurrency(currency: Currency) = baseCurrencyCode.set(currency.code)
@@ -69,16 +69,7 @@ class XChangeRepositoryImpl(private val fixerApi: FixerApi,
     }
 
 
-    private fun loadCurrenciesFromServer(): LiveData<FixerResponse> {
-        val serverCall = LiveDataReactiveStreams.fromPublisher(
-                fixerApi.defaultCall()
-                        .onErrorReturn { FixerResponse.ERROR }
-                        .subscribeOn(Schedulers.io()))
-
-        return serverCall
-    }
-
-    private fun observeCurrencies() {
+    override fun updateCurrencies() {
         val dbSource = db.currenciesDao().currencies
         with(_availableCurrencies) {
             postValue(CurrenciesData.Loading)
@@ -93,8 +84,10 @@ class XChangeRepositoryImpl(private val fixerApi: FixerApi,
                             val list = it.toCurrencyList()
                             executor.execute {
                                 db.currenciesDao().setCurrencies(list)
-                                observeCurrencies()
+                                updateCurrencies()
                             }
+                        } else {
+                            postValue(CurrenciesData.Error("error"))
                         }
                     }
                 } else {
@@ -102,5 +95,14 @@ class XChangeRepositoryImpl(private val fixerApi: FixerApi,
                 }
             }
         }
+    }
+
+    private fun loadCurrenciesFromServer(): LiveData<FixerResponse> {
+        val serverCall = LiveDataReactiveStreams.fromPublisher(
+                fixerApi.defaultCall()
+                        .onErrorReturn { FixerResponse.ERROR }
+                        .subscribeOn(Schedulers.io()))
+
+        return serverCall
     }
 }

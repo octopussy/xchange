@@ -16,6 +16,7 @@ import java.util.List;
 
 @Dao
 public interface CurrenciesDao {
+
     @Query("SELECT * FROM " + Currency.TABLE_NAME)
     LiveData<List<Currency>> getCurrencies();
 
