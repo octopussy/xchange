@@ -3,7 +3,6 @@ package com.github.op.xchange.repository
 import android.arch.lifecycle.LiveData
 import com.github.op.xchange.entity.Currency
 import com.github.op.xchange.entity.RateEntry
-import io.reactivex.Flowable
 
 /**
  * @author mcpussy
@@ -13,11 +12,13 @@ interface XChangeRepository {
 
     val selectedCurrencyPair: LiveData<Pair<Currency, Currency>>
 
-    val availableCurrencies: LiveData<List<Currency>>
+    val availableCurrencies: LiveData<CurrenciesData>
 
     fun getRateHistory(currencyPair: Pair<Currency, Currency>): LiveData<List<RateEntry>>
 
-    fun selectFirstCurrency(currency: Currency)
+    fun updateRateHistory(currencyPair: Pair<Currency, Currency>)
 
-    fun selectSecondCurrency(currency: Currency)
+    fun selectBaseCurrency(currency: Currency)
+
+    fun selectRelatedCurrency(currency: Currency)
 }

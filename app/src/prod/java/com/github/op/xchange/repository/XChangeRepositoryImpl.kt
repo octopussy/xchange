@@ -1,24 +1,29 @@
 package com.github.op.xchange.repository
 
-import android.arch.lifecycle.LiveData
-import android.arch.lifecycle.LiveDataReactiveStreams
-import android.arch.lifecycle.MutableLiveData
+import android.arch.lifecycle.*
 import com.f2prateek.rx.preferences2.RxSharedPreferences
+import com.github.op.xchange.api.FixerApi
+import com.github.op.xchange.api.FixerResponse
 import com.github.op.xchange.db.XChangeDatabase
 import com.github.op.xchange.entity.Currency
 import com.github.op.xchange.entity.RateEntry
 import io.reactivex.BackpressureStrategy
 import io.reactivex.Observable
 import io.reactivex.functions.BiFunction
+import io.reactivex.schedulers.Schedulers
+import java.util.concurrent.Executors
 
-class XChangeRepositoryImpl(private val db: XChangeDatabase, private val rxPrefs: RxSharedPreferences) : XChangeRepository {
+class XChangeRepositoryImpl(private val fixerApi: FixerApi,
+                            private val db: XChangeDatabase,
+                            rxPrefs: RxSharedPreferences) : XChangeRepository {
 
-    private val firstCurrencyCode = rxPrefs.getString("firstCurrencyCode")
-    private val secondCurrencyCode = rxPrefs.getString("secondCurrencyCode")
+    private val executor = Executors.newSingleThreadExecutor()
+    private val baseCurrencyCode = rxPrefs.getString("baseCurrencyCode")
+    private val relatedCurrencyCode = rxPrefs.getString("relatedCurrencyCode")
 
     override val selectedCurrencyPair: LiveData<Pair<Currency, Currency>> by lazy {
-        val firstObs = firstCurrencyCode.asObservable()
-        val secondObs = secondCurrencyCode.asObservable()
+        val firstObs = baseCurrencyCode.asObservable()
+        val secondObs = relatedCurrencyCode.asObservable()
         val result: Observable<Pair<Currency, Currency>> = Observable.combineLatest(firstObs, secondObs, BiFunction { t1, t2 ->
             Pair(Currency(t1), Currency(t2))
         })
@@ -26,19 +31,69 @@ class XChangeRepositoryImpl(private val db: XChangeDatabase, private val rxPrefs
         LiveDataReactiveStreams.fromPublisher(result.toFlowable(BackpressureStrategy.LATEST))
     }
 
-    private val _availableCurrencies = MutableLiveData<List<Currency>>()
-    override val availableCurrencies: LiveData<List<Currency>>
+    private val _availableCurrencies = MediatorLiveData<CurrenciesData>()
+    override val availableCurrencies: LiveData<CurrenciesData>
         get() = _availableCurrencies
 
     init {
-        _availableCurrencies.value = listOf(Currency("USD"), Currency("EUR"), Currency("RUB"))
+        loadCurrencies()
     }
 
-    override fun selectFirstCurrency(currency: Currency) = firstCurrencyCode.set(currency.code)
+    override fun selectBaseCurrency(currency: Currency) = baseCurrencyCode.set(currency.code)
 
-    override fun selectSecondCurrency(currency: Currency) = secondCurrencyCode.set(currency.code)
+    override fun selectRelatedCurrency(currency: Currency) = relatedCurrencyCode.set(currency.code)
 
     override fun getRateHistory(currencyPair: Pair<Currency, Currency>): LiveData<List<RateEntry>> {
         return db.ratesDao().getRates(currencyPair.first.code, currencyPair.second.code)
+    }
+
+    override fun updateRateHistory(currencyPair: Pair<Currency, Currency>) {
+        val baseCurrencyCode = currencyPair.first.code
+        val relatedCurrencyCode = currencyPair.second.code
+        fixerApi.updateRateHistory(baseCurrencyCode, relatedCurrencyCode)
+                .subscribeOn(Schedulers.io())
+                .subscribe({
+                    if (it != null && it.rates.containsKey(relatedCurrencyCode)) {
+                        val rate = it.rates[relatedCurrencyCode] ?: -1f
+                        db.ratesDao().addRate(RateEntry(baseCurrencyCode, relatedCurrencyCode, rate, it.date))
+                    }
+                }, {
+
+                })
+    }
+
+    private fun loadCurrenciesFromServer(): LiveData<FixerResponse> {
+        val serverCall = LiveDataReactiveStreams.fromPublisher(
+                fixerApi.defaultCall()
+                        .onErrorReturn { FixerResponse.ERROR }
+                        .subscribeOn(Schedulers.io()))
+
+        return serverCall
+    }
+
+    private fun loadCurrencies() {
+        val dbSource = db.currenciesDao().currencies
+        with(_availableCurrencies) {
+            value = CurrenciesData.Loading
+            addSource(dbSource) {
+                removeSource(dbSource)
+
+                if (it != null) {
+                    _availableCurrencies.value = CurrenciesData.Loaded(it)
+                }
+
+                val netCall = loadCurrenciesFromServer()
+                addSource(netCall) {
+                    removeSource(netCall)
+                    if (it != null && it != FixerResponse.ERROR) {
+                        val list = it.toCurrencyList()
+                        _availableCurrencies.value = CurrenciesData.Loaded(list)
+                        executor.execute {
+                            db.currenciesDao().setCurrencies(list)
+                        }
+                    }
+                }
+            }
+        }
     }
 }

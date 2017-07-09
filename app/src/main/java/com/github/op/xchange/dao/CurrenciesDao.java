@@ -9,6 +9,9 @@ import android.arch.persistence.room.Query;
 import com.github.op.xchange.entity.Currency;
 import com.github.op.xchange.entity.RateEntry;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.util.List;
 
 @Dao
@@ -17,5 +20,5 @@ public interface CurrenciesDao {
     LiveData<List<Currency>> getCurrencies();
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    void addCurrency(RateEntry rate);
+    void setCurrencies(@NotNull List<Currency> list);
 }

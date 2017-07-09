@@ -46,7 +46,7 @@ class MainActivity : BaseActivity() {
 
             override fun onItemSelected(parent: AdapterView<*>, view: View, position: Int, id: Long) {
                 val item = parent.adapter.getItem(position)
-                viewModel.selectFirstCurrency(item as Currency)
+                viewModel.selectBaseCurrency(item as Currency)
             }
         }
 
@@ -55,7 +55,7 @@ class MainActivity : BaseActivity() {
 
             override fun onItemSelected(parent: AdapterView<*>, view: View, position: Int, id: Long) {
                 val item = parent.adapter.getItem(position)
-                viewModel.selectSecondCurrency(item as Currency)
+                viewModel.selectRelatedCurrency(item as Currency)
             }
 
         }

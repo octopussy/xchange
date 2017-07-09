@@ -7,7 +7,7 @@ import com.github.op.xchange.entity.RateEntry
 import com.github.op.xchange.dao.RatesDao
 import com.github.op.xchange.entity.Currency
 
-@Database(entities = arrayOf(RateEntry::class, Currency::class), version = 1)
+@Database(entities = arrayOf(RateEntry::class, Currency::class), version = 2)
 //@TypeConverters(DateTypeConverter::class)
 abstract class XChangeDatabase : RoomDatabase() {
     abstract fun ratesDao(): RatesDao

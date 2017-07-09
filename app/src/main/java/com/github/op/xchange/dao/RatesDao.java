@@ -11,8 +11,11 @@ import java.util.List;
 
 @Dao
 public interface RatesDao {
-    @Query("SELECT * FROM " + RateEntry.TABLE_NAME + " WHERE code1 = :code1 AND code2 = :code2")
-    LiveData<List<RateEntry>> getRates(String code1, String code2);
+
+    @Query("SELECT * FROM " + RateEntry.TABLE_NAME + " WHERE "
+            + RateEntry.FIELD_BASE_CODE + " = :baseCode AND "
+            + RateEntry.FIELD_RELATED_CODE + " = :relatedCode")
+    LiveData<List<RateEntry>> getRates(String baseCode, String relatedCode);
 
     @Insert
     void addRate(RateEntry rate);
