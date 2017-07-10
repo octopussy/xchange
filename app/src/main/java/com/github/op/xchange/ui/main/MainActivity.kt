@@ -5,6 +5,7 @@ import android.arch.lifecycle.ViewModelProviders
 import android.content.Intent
 import android.os.Bundle
 import android.support.v7.widget.LinearLayoutManager
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
@@ -91,40 +92,30 @@ class MainActivity : BaseActivity() {
         }
 
         swipeRefreshLayout.setOnRefreshListener { viewModel.refreshHistory() }
+
+        btnSwap.setOnClickListener { viewModel.swapCurrencies() }
     }
 
     private fun setupObservers() {
-        viewModel.rateHistoryLiveData.observe(this, Observer {
-
-            noDataText.visible =false
-            mainContentPanel.visible = false
+        viewModel.rateHistoryStateLiveData.observe(this, Observer {
+            noDataText.visible = false
             progressBar.visible = false
 
             when (it) {
-                is RatesLiveData.State.Loading -> {
-                    progressBar.visible = !swipeRefreshLayout.isRefreshing
+                is RateHistoryState.Error -> {
+                    Log.e("xchange", it.throwable.localizedMessage)
+                    swipeRefreshLayout.isRefreshing = false
+                    showList(it.list, true)
                 }
 
-                is RatesLiveData.State.SuccessEmpty -> {
-                    swipeRefreshLayout.isRefreshing = false
-                    mainContentPanel.visible = true
-                    noDataText.visible = true
+                is RateHistoryState.Loading -> {
+                    swipeRefreshLayout.isRefreshing = true
+                    showList(it.list, false)
                 }
 
-                is RatesLiveData.State.Error -> {
+                is RateHistoryState.Success -> {
                     swipeRefreshLayout.isRefreshing = false
-                    mainContentPanel.visible = true
-                    showErrorToast(it.throwable)
-                }
-
-                is RatesLiveData.State.Success -> {
-                    swipeRefreshLayout.isRefreshing = false
-                    mainContentPanel.visible = true
-                    rvAdapter.items = it.list
-
-                    lastRateValueTextView.text = it.latestRate.rate.asCurrencyValueString()
-                    lastRateUpdateDateTextView.text = resources.getString(R.string.label_last_update,
-                            it.latestRate.date.formatDateTime())
+                    showList(it.list, true)
                 }
             }
         })
@@ -140,6 +131,20 @@ class MainActivity : BaseActivity() {
                 relCurrencySpinner.setSelection(relCurrencyAdapter.getPosition(it.selection.second))
             }
         })
+    }
+
+    private fun showList(list: List<RateVO>?, showEmpty: Boolean) {
+        rvAdapter.items = list ?: listOf()
+        val latestRate = list?.firstOrNull()
+        if (latestRate != null) {
+            lastRateValueTextView.text = latestRate.value.asCurrencyValueString()
+            lastRateUpdateDateTextView.text = resources.getString(R.string.label_last_update,
+                    latestRate.date.formatDateTime())
+        } else if (showEmpty){
+            noDataText.visible = true
+            lastRateValueTextView.text = ""
+            lastRateUpdateDateTextView.text = ""
+        }
     }
 
     private fun showErrorToast(th: Throwable) {

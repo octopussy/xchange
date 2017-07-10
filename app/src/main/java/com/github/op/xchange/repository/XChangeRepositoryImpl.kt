@@ -1,6 +1,7 @@
 package com.github.op.xchange.repository
 
 import android.arch.lifecycle.LiveData
+import android.support.annotation.WorkerThread
 import com.f2prateek.rx.preferences2.RxSharedPreferences
 import com.github.op.xchange.api.RemoteApi
 import com.github.op.xchange.db.XChangeDatabase
@@ -11,7 +12,6 @@ import io.reactivex.Completable
 import io.reactivex.Observable
 import io.reactivex.Single
 import io.reactivex.functions.BiFunction
-import io.reactivex.schedulers.Schedulers
 import org.threeten.bp.LocalDateTime
 
 class XChangeRepositoryImpl(private val remoteApi: RemoteApi,
@@ -42,37 +42,53 @@ class XChangeRepositoryImpl(private val remoteApi: RemoteApi,
 
     override fun selectRelatedCurrency(currency: Currency) = relatedCurrencyCode.set(currency.name)
 
-    override fun getRateHistory(currencyPair: CurrencyPair): Observable<List<RateEntry>> {
-        val obs = db.ratesDao().getRates(currencyPair.first.name, currencyPair.second.name).toObservable()
-        refreshRateHistory(currencyPair)
-                .subscribeOn(Schedulers.io())
-                .subscribe({}, {})
-        return obs
+    override fun swapCurrencies() {
+        val c = baseCurrencyCode.get()
+        baseCurrencyCode.set(relatedCurrencyCode.get())
+        relatedCurrencyCode.set(c)
+    }
+
+    override fun getRateHistoryProvider(currencyPair: CurrencyPair): ResourceProvider<List<RateEntry>> {
+        return object : NetworkResourceProvider<List<RateEntry>, RateEntry>() {
+            override fun saveCallResult(item: RateEntry) {
+                insertOrUpdateRate(currencyPair, item)
+            }
+
+            override fun shouldFetch(data: List<RateEntry>?): Boolean = true
+
+            override fun loadFromDb(): LiveData<List<RateEntry>> {
+                return db.ratesDao().getRatesLD(currencyPair.first.name, currencyPair.second.name)
+            }
+
+            override fun createApiCall(): Single<RateEntry> {
+                val baseCode = currencyPair.first.name
+                val relCode = currencyPair.second.name
+                return remoteApi.getLatestRate(currencyPair.first.name, currencyPair.second.name).map {
+                    val rate = it.rates[relCode] ?: throw RuntimeException("Unknown currency")
+                    return@map RateEntry(baseCode, relCode, rate, LocalDateTime.now())
+                }
+            }
+        }
     }
 
     override fun clearData(): Completable = Completable.fromAction {
         db.ratesDao().deleteAllRates()
     }
 
-    private fun refreshRateHistory(currencyPair: CurrencyPair): Completable {
-        val baseCurrencyCode = currencyPair.first.name
-        val relatedCurrencyCode = currencyPair.second.name
-        return remoteApi.getLatestRate(baseCurrencyCode, relatedCurrencyCode)
-                .doOnSuccess {
-                    if (it != null && it.rates.containsKey(relatedCurrencyCode)) {
-                        val rate = it.rates[relatedCurrencyCode] ?: -1f
-                        with(db.ratesDao()) {
-                            val existEntry = getLatestRateSync(baseCurrencyCode, relatedCurrencyCode)
-                            val now = LocalDateTime.now()
-                            if (existEntry == null || existEntry.rate != rate) {
-                                val newEntry = RateEntry(baseCurrencyCode, relatedCurrencyCode, rate, now)
-                                addRate(newEntry)
-                            } else {
-                                existEntry.date = now
-                                updateRate(existEntry)
-                            }
-                        }
-                    }
-                }.toCompletable()
+    @WorkerThread
+    private fun insertOrUpdateRate(currencyPair: CurrencyPair, item: RateEntry) {
+        val baseCode = currencyPair.first.name
+        val relCode = currencyPair.second.name
+
+        with(db.ratesDao()) {
+            val existEntry = getLatestRateSync(baseCode, relCode)
+            val now = LocalDateTime.now()
+            if (existEntry == null || existEntry.rate != item.rate) {
+                addRate(item)
+            } else {
+                existEntry.date = now
+                updateRate(existEntry)
+            }
+        }
     }
 }

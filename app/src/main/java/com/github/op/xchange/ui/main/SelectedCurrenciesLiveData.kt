@@ -26,7 +26,6 @@ class SelectedCurrenciesLiveData(val repository: XChangeRepository)
 
     override fun onInactive() {
         super.onInactive()
-        unsubscribe()
         if (!hasObservers()) {
             disposable?.dispose()
             disposable = null
@@ -34,7 +33,6 @@ class SelectedCurrenciesLiveData(val repository: XChangeRepository)
     }
 
     private fun subscribe() {
-        unsubscribe()
         disposable = repository.selectedCurrencyPair
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
@@ -45,8 +43,5 @@ class SelectedCurrenciesLiveData(val repository: XChangeRepository)
                 }, {
 
                 })
-    }
-
-    private fun unsubscribe() {
     }
 }

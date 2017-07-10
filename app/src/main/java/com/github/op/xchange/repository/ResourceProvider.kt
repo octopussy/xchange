@@ -7,4 +7,6 @@ abstract class ResourceProvider<T> {
     protected val _result = MediatorLiveData<Resource<T>>()
     val result: LiveData<Resource<T>>
         get() = _result
+
+    abstract fun reload()
 }

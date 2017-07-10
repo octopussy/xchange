@@ -11,11 +11,13 @@ interface XChangeRepository {
 
     val selectedCurrencyPair: Observable<CurrencyPair>
 
-    fun getRateHistory(currencyPair: CurrencyPair): Observable<List<RateEntry>>
+    fun getRateHistoryProvider(currencyPair: CurrencyPair): ResourceProvider<List<RateEntry>>
 
     fun selectBaseCurrency(currency: Currency)
 
     fun selectRelatedCurrency(currency: Currency)
+
+    fun swapCurrencies()
 
     fun clearData(): Completable
 }

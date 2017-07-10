@@ -1,19 +1,20 @@
 package com.github.op.xchange.repository
 
-import com.github.op.xchange.api.ApiResponse
 import android.arch.lifecycle.LiveData
 import android.support.annotation.MainThread
 import android.support.annotation.NonNull
-import android.support.annotation.Nullable
 import android.support.annotation.WorkerThread
-import android.os.AsyncTask
+import io.reactivex.Completable
+import io.reactivex.Single
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.schedulers.Schedulers
 
+abstract class NetworkResourceProvider<ResultType, RequestType> : ResourceProvider<ResultType>() {
 
-/*
-abstract class NetworkResourceProvider<T> : ResourceProvider<T>() {
-
-    init {
-        _result.setValue(Resource.loading(null))
+    override fun reload() {
+        if (_result.value == null) {
+            _result.setValue(Resource.loading(null))
+        }
         val dbSource = loadFromDb()
         _result.addSource(dbSource) { data ->
             _result.removeSource(dbSource)
@@ -28,67 +29,55 @@ abstract class NetworkResourceProvider<T> : ResourceProvider<T>() {
         }
     }
 
-    private fun fetchFromNetwork(dbSource: LiveData<T>) {
-        val apiResponse = createCall()
-        // we re-attach dbSource as a new source,
-        // it will dispatch its latest value quickly
-        _result.addSource(dbSource) {
-            newData ->
+    private fun fetchFromNetwork(dbSource: LiveData<ResultType>) {
+        val apiResponse = createApiCall()
+
+        _result.addSource(dbSource) { newData ->
             _result.setValue(Resource.loading(newData))
         }
-        _result.addSource(apiResponse) { response ->
-            _result.removeSource(apiResponse)
-            _result.removeSource(dbSource)
 
-            if (response.isSuccessful()) {
-                saveResultAndReInit(response)
-            } else {
-                onFetchFailed()
-                _result.addSource(dbSource
-                ) { newData ->
-                    _result.setValue(Resource.error(response.errorMessage, newData))
+        apiResponse.subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe { result, error ->
+                    _result.removeSource(dbSource)
+
+                    if (error == null) {
+                        Completable.fromCallable { saveCallResult(result) }
+                                .subscribeOn(Schedulers.io())
+                                .observeOn(AndroidSchedulers.mainThread())
+                                .subscribe({
+                                    _result.addSource(loadFromDb()) {
+                                        newData ->
+                                        _result.value = Resource.success(newData!!)
+                                    }
+                                }, {
+
+                                })
+                    } else {
+                        onFetchFailed()
+                        _result.addSource(dbSource) { newData ->
+                            _result.value = Resource.error(newData, error)
+                        }
+                    }
                 }
-            }
-        }
-    }
-
-    @MainThread
-    private fun saveResultAndReInit(response: ApiResponse<RequestType>) {
-        object : AsyncTask<Void, Void, Void>() {
-
-            override fun doInBackground(vararg voids: Void): Void? {
-                saveCall_result(response.body)
-                return null
-            }
-
-            override fun onPostExecute(aVoid: Void) {
-                // we specially request a new live data,
-                // otherwise we will get immediately last cached value,
-                // which may not be updated with latest _results received from network.
-                _result.addSource(loadFromDb()) {
-                    newData ->
-                    _result.setValue(Resource.success(newData))
-                }
-            }
-        }.execute()
     }
 
     @WorkerThread
-    protected abstract fun saveCall_result(@NonNull item: RequestType)
+    protected abstract fun saveCallResult(item: RequestType)
 
     @MainThread
-    protected abstract fun shouldFetch(@Nullable data: T): Boolean
-
-    @NonNull
-    @MainThread
-    protected abstract fun loadFromDb(): LiveData<T>
+    protected abstract fun shouldFetch(data: ResultType?): Boolean
 
     @NonNull
     @MainThread
-    protected abstract fun createCall(): LiveData<ApiResponse<RequestType>>
+    protected abstract fun loadFromDb(): LiveData<ResultType>
+
+    @NonNull
+    @MainThread
+    protected abstract fun createApiCall(): Single<RequestType>
 
     @MainThread
     protected fun onFetchFailed() {
     }
 
-}*/
+}
