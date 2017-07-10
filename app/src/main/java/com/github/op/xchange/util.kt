@@ -15,6 +15,6 @@ class LocalDateGsonTypeAdapter : TypeAdapter<LocalDateTime>() {
     }
 }
 
-fun Float.asCurrencyValueString() : String = String.format("%.4f", this)
+fun Float.asCurrencyValueString() : String = String.format("%.5f", this)
 
 fun LocalDateTime.formatDateTime() : String = this.format(DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM))

@@ -21,8 +21,7 @@ abstract class NetworkResourceProvider<ResultType, RequestType> : ResourceProvid
             if (shouldFetch(data)) {
                 fetchFromNetwork(dbSource)
             } else {
-                _result.addSource(dbSource) {
-                    newData ->
+                _result.addSource(dbSource) { newData ->
                     _result.setValue(Resource.success(newData!!))
                 }
             }

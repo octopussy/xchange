@@ -12,6 +12,7 @@ import butterknife.ButterKnife
 import com.github.op.xchange.R
 import com.github.op.xchange.asCurrencyValueString
 import com.github.op.xchange.formatDateTime
+import com.github.op.xchange.ui.visible
 
 class RateHistoryListAdapter(val context: Context) : RecyclerView.Adapter<RateHistoryListAdapter.VH>() {
 
@@ -27,6 +28,7 @@ class RateHistoryListAdapter(val context: Context) : RecyclerView.Adapter<RateHi
         val item = items[position]
         with(holder) {
             val isDiffPositive = item.diff > 0f
+            val isDiffZero = item.diff == 0f
 
             tvValue.text = item.value.asCurrencyValueString()
 
@@ -36,6 +38,9 @@ class RateHistoryListAdapter(val context: Context) : RecyclerView.Adapter<RateHi
             val id = if (isDiffPositive) R.drawable.ic_arrow_drop_up else R.drawable.ic_arrow_drop_down
             val icon = ContextCompat.getDrawable(context, id)
             icDiff.setImageDrawable(icon)
+
+            tvDiff.visible = !isDiffZero
+            icDiff.visible = !isDiffZero
 
             tvDate.text = item.date.formatDateTime()
 
