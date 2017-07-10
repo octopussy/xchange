@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="currency_usd">United States Dollar</string>
+    <string name="currency_eur">Euro</string>
+    <string name="currency_uah">Ukraine Hryvnia</string>
+    <string name="currency_rub">Russia Ruble</string>
+    <string name="currency_aud">Australia Dollar</string>
+    <string name="currency_bgn">Bulgaria Lev</string>
+    <string name="currency_brl">Brazil Real</string>
+    <string name="currency_cad">Canada Dollar</string>
+    <string name="currency_chf">Switzerland Franc</string>
+    <string name="currency_cny">China Yuan</string>
+    <string name="currency_czk">Czech Republic Koruna</string>
+    <string name="currency_dkk">Denmark Krone</string>
+    <string name="currency_gbp">United Kingdom Pound</string>
+    <string name="currency_hkd">Hong Kong Dollar</string>
+    <string name="currency_hrk">Croatia Kuna</string>
+    <string name="currency_huf">Hungary Forint</string>
+    <string name="currency_idr">Indonesia Rupiah</string>
+    <string name="currency_ils">Israel Shekel</string>
+    <string name="currency_inr">India Rupee</string>
+    <string name="currency_jpy">Japan Yen</string>
+    <string name="currency_krw">Korea (South) Won</string>
+    <string name="currency_mxn">Mexico Peso</string>
+    <string name="currency_myr">Malaysia Ringgit</string>
+    <string name="currency_nok">Norway Krone</string>
+    <string name="currency_nzd">New Zealand Dollar</string>
+    <string name="currency_php">Philippines Peso</string>
+    <string name="currency_pln">Poland Zloty</string>
+    <string name="currency_ron">Romania New Leu</string>
+    <string name="currency_sek">Sweden Krona</string>
+    <string name="currency_sgd">Singapore Dollar</string>
+    <string name="currency_thb">Thailand Baht</string>
+    <string name="currency_try">Turkey Lira</string>
+    <string name="currency_zar">South Africa Rand</string>
+</resources>

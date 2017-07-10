@@ -5,13 +5,10 @@ import android.arch.lifecycle.ViewModelProviders
 import android.content.Intent
 import android.os.Bundle
 import android.support.v7.widget.LinearLayoutManager
-import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.AdapterView
-import android.widget.ArrayAdapter
-import android.widget.Toast
 import com.github.op.xchange.R
 import com.github.op.xchange.asCurrencyValueString
 import com.github.op.xchange.entity.Currency
@@ -27,15 +24,12 @@ class MainActivity : BaseActivity() {
 
     private lateinit var viewModel: MainViewModel
 
-    private lateinit var baseCurrencyAdapter: ArrayAdapter<Currency>
-
-    private lateinit var relCurrencyAdapter: ArrayAdapter<Currency>
-
     private lateinit var rvAdapter: RateHistoryListAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
         viewModel = ViewModelProviders.of(this, ViewModelFactory(application))[MainViewModel::class.java]
 
         setupView()
@@ -63,20 +57,10 @@ class MainActivity : BaseActivity() {
         rvAdapter = RateHistoryListAdapter(this)
         rvRateHistory.adapter = rvAdapter
 
-        baseCurrencyAdapter = ArrayAdapter<Currency>(this, android.R.layout.simple_spinner_item).apply {
-            setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        }
-        baseCurrencySpinner.adapter = baseCurrencyAdapter
-
-        relCurrencyAdapter = ArrayAdapter<Currency>(this, android.R.layout.simple_spinner_item).apply {
-            setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        }
-        relCurrencySpinner.adapter = relCurrencyAdapter
-
         baseCurrencySpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onNothingSelected(parent: AdapterView<*>?) {}
 
-            override fun onItemSelected(parent: AdapterView<*>, view: View, position: Int, id: Long) {
+            override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {
                 val item = parent.adapter.getItem(position)
                 viewModel.selectBaseCurrency(item as Currency)
             }
@@ -85,7 +69,7 @@ class MainActivity : BaseActivity() {
         relCurrencySpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onNothingSelected(parent: AdapterView<*>?) {}
 
-            override fun onItemSelected(parent: AdapterView<*>, view: View, position: Int, id: Long) {
+            override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {
                 val item = parent.adapter.getItem(position)
                 viewModel.selectRelatedCurrency(item as Currency)
             }
@@ -97,57 +81,35 @@ class MainActivity : BaseActivity() {
     }
 
     private fun setupObservers() {
-        viewModel.rateHistoryStateLiveData.observe(this, Observer {
-            noDataText.visible = false
-            progressBar.visible = false
+        val ac = this
+        with(viewModel) {
+            isLoading.observe(ac, Observer { swipeRefreshLayout.isRefreshing = it ?: false })
 
-            when (it) {
-                is RateHistoryState.Error -> {
-                    Log.e("xchange", it.throwable.localizedMessage)
-                    swipeRefreshLayout.isRefreshing = false
-                    showList(it.list, true)
+            isNoDataTextVisible.observe(ac, Observer { noDataText.visible = it ?: false })
+
+            rateHistoryList.observe(ac, Observer {
+                val list = it?.first
+                val latest = it?.second
+                rvAdapter.items = list ?: listOf()
+                if (latest != null) {
+                    lastRateValueTextView.text = latest.value.asCurrencyValueString()
+                    lastRateUpdateDateTextView.text = resources.getString(R.string.label_last_update,
+                            latest.date.formatDateTime())
+                } else {
+                    lastRateValueTextView.text = ""
+                    lastRateUpdateDateTextView.text = ""
                 }
+            })
 
-                is RateHistoryState.Loading -> {
-                    swipeRefreshLayout.isRefreshing = true
-                    showList(it.list, false)
+            selectedCurrenciesLiveData.observe(ac, Observer {
+                it?.let {
+                    baseCurrencySpinner.adapter = CurrenciesSpinnerAdapter(this@MainActivity, it.baseList)
+                    baseCurrencySpinner.setSelection(it.baseList.indexOf(it.selection.first))
+
+                    relCurrencySpinner.adapter = CurrenciesSpinnerAdapter(this@MainActivity, it.relList)
+                    relCurrencySpinner.setSelection(it.relList.indexOf(it.selection.second))
                 }
-
-                is RateHistoryState.Success -> {
-                    swipeRefreshLayout.isRefreshing = false
-                    showList(it.list, true)
-                }
-            }
-        })
-
-        viewModel.selectedCurrenciesLiveData.observe(this, Observer {
-            it?.let {
-                baseCurrencyAdapter.clear()
-                baseCurrencyAdapter.addAll(it.baseList)
-                baseCurrencySpinner.setSelection(baseCurrencyAdapter.getPosition(it.selection.first))
-
-                relCurrencyAdapter.clear()
-                relCurrencyAdapter.addAll(it.relList)
-                relCurrencySpinner.setSelection(relCurrencyAdapter.getPosition(it.selection.second))
-            }
-        })
-    }
-
-    private fun showList(list: List<RateVO>?, showEmpty: Boolean) {
-        rvAdapter.items = list ?: listOf()
-        val latestRate = list?.firstOrNull()
-        if (latestRate != null) {
-            lastRateValueTextView.text = latestRate.value.asCurrencyValueString()
-            lastRateUpdateDateTextView.text = resources.getString(R.string.label_last_update,
-                    latestRate.date.formatDateTime())
-        } else if (showEmpty){
-            noDataText.visible = true
-            lastRateValueTextView.text = ""
-            lastRateUpdateDateTextView.text = ""
+            })
         }
-    }
-
-    private fun showErrorToast(th: Throwable) {
-        Toast.makeText(this, th.localizedMessage, Toast.LENGTH_LONG).show()
     }
 }

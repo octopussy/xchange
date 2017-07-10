@@ -30,7 +30,6 @@ class XChangeApp : Application() {
         AndroidThreeTen.init(this)
         _component = DaggerXComponent.builder().appModule(AppModule(this)).build()
         _component.inject(this)
-        repository.updateAll()
         setupAlarm()
     }
 

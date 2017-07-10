@@ -1,9 +1,9 @@
 package com.github.op.xchange.repository
 
-sealed class Resource<T> {
-    class Success<T>(val data: T) : Resource<T>()
-    class Error<T>(val data: T?, val throwable: Throwable) : Resource<T>()
-    class Loading<T>(val data: T?) : Resource<T>()
+sealed class Resource<T>(val data: T?) {
+    class Success<T>(data: T) : Resource<T>(data)
+    class Error<T>(data: T?, val throwable: Throwable) : Resource<T>(data)
+    class Loading<T>(data: T?) : Resource<T>(data)
     
     companion object {
         fun <T> success(data: T): Resource<T> {

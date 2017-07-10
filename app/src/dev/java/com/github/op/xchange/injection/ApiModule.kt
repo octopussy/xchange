@@ -15,6 +15,10 @@ class ApiModule {
     fun remoteApi(): RemoteApi {
 
         return object : RemoteApi {
+            override fun getLatestRates(baseCurrency: String): Single<ApiResponse> {
+                return getLatestRate(baseCurrency, "")
+            }
+
             override fun getLatestRate(baseCurrency: String, relatedCurrency: String): Single<ApiResponse> {
                 return Single.just(ApiResponse(baseCurrency, genRandomRates(baseCurrency)))
             }

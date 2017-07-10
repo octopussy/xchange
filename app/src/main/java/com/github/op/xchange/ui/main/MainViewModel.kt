@@ -1,6 +1,7 @@
 package com.github.op.xchange.ui.main
 
 import android.arch.lifecycle.LiveData
+import android.arch.lifecycle.MediatorLiveData
 import android.arch.lifecycle.Transformations
 import android.arch.lifecycle.ViewModel
 import com.github.op.xchange.entity.Currency
@@ -19,7 +20,7 @@ class MainViewModel : ViewModel(), XComponent.Injectable {
 
     private var rateHistoryProvider: ResourceProvider<List<RateEntry>>? = null
 
-    private val _rateHistoryLiveData by lazy {
+    private val _rateHistoryResource by lazy {
         Transformations.switchMap(selectedCurrenciesLiveData) {
             rateHistoryProvider = repository.getRateHistoryProvider(it.selection)
             rateHistoryProvider!!.reload()
@@ -29,12 +30,32 @@ class MainViewModel : ViewModel(), XComponent.Injectable {
 
     val selectedCurrenciesLiveData by lazy { SelectedCurrenciesLiveData(repository) }
 
-    val rateHistoryStateLiveData: LiveData<RateHistoryState> by lazy {
-        Transformations.map(_rateHistoryLiveData) {
-            when (it) {
-                is Resource.Error -> RateHistoryState.Error(makeVOList(it.data), it.throwable)
-                is Resource.Loading -> RateHistoryState.Loading(makeVOList(it.data))
-                is Resource.Success -> RateHistoryState.Success(makeVOList(it.data)?: listOf())
+    val rateHistoryList by lazy {
+        MediatorLiveData<Pair<List<RateVO>?, RateVO?>>().apply {
+            this.addSource(_rateHistoryResource) {
+                val list = makeVOList(it?.data)
+                if (list != null) {
+                    value = Pair(list, list.firstOrNull())
+                }
+            }
+        }
+    }
+
+    val isLoading by lazy {
+        MediatorLiveData<Boolean>().apply {
+            addSource(_rateHistoryResource) {
+                it?.let { value = it is Resource.Loading }
+            }
+        }
+    }
+
+    val isNoDataTextVisible by lazy {
+        MediatorLiveData<Boolean>().apply {
+            addSource(_rateHistoryResource) {
+                it?.let {
+                    val listEmpty = it.data?.isEmpty() ?: true
+                    value = (it !is Resource.Loading) && listEmpty
+                }
             }
         }
     }
@@ -43,7 +64,9 @@ class MainViewModel : ViewModel(), XComponent.Injectable {
 
     fun selectRelatedCurrency(currency: Currency) = repository.selectRelatedCurrency(currency)
 
-    fun refreshHistory() { rateHistoryProvider?.reload() }
+    fun refreshHistory() {
+        rateHistoryProvider?.reload()
+    }
 
     fun swapCurrencies() {
         repository.swapSelectedCurrencies()

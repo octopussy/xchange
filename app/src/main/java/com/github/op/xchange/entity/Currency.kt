@@ -1,13 +1,15 @@
 package com.github.op.xchange.entity
 
+import android.content.Context
+
 typealias CurrencyPair = Pair<Currency, Currency>
 
-enum class Currency(val visible:Boolean = true) {
+enum class Currency(val visible: Boolean = true) {
     UNKNOWN(visible = false),
     USD,
     EUR,
-    UAH,
     RUB,
+    UAH,
     AUD,
     BGN,
     BRL,
@@ -40,11 +42,20 @@ enum class Currency(val visible:Boolean = true) {
 
     override fun toString(): String = name
 
+    fun format(context: Context): String {
+        val id = context.resources.getIdentifier("currency_${name.toLowerCase()}", "string", context.packageName)
+        return if (id > 0) {
+            "$name - ${context.resources.getString(id)}"
+        } else {
+            name
+        }
+    }
+
     companion object {
         fun fromString(s: String): Currency {
             try {
                 return valueOf(s)
-            } catch (_: IllegalArgumentException){
+            } catch (_: IllegalArgumentException) {
                 return UNKNOWN
             }
         }
