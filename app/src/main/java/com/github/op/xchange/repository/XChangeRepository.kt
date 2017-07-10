@@ -17,7 +17,9 @@ interface XChangeRepository {
 
     fun selectRelatedCurrency(currency: Currency)
 
-    fun swapCurrencies()
+    fun swapSelectedCurrencies()
 
     fun clearData(): Completable
+
+    fun updateAll()
 }

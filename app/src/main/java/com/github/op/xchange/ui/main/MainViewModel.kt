@@ -46,7 +46,7 @@ class MainViewModel : ViewModel(), XComponent.Injectable {
     fun refreshHistory() { rateHistoryProvider?.reload() }
 
     fun swapCurrencies() {
-        repository.swapCurrencies()
+        repository.swapSelectedCurrencies()
     }
 
     override fun inject(component: XComponent) {

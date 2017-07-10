@@ -2,6 +2,7 @@ package com.github.op.xchange.repository
 
 import android.arch.lifecycle.LiveData
 import android.support.annotation.WorkerThread
+import android.util.Log
 import com.f2prateek.rx.preferences2.RxSharedPreferences
 import com.github.op.xchange.api.RemoteApi
 import com.github.op.xchange.db.XChangeDatabase
@@ -12,6 +13,7 @@ import io.reactivex.Completable
 import io.reactivex.Observable
 import io.reactivex.Single
 import io.reactivex.functions.BiFunction
+import io.reactivex.schedulers.Schedulers
 import org.threeten.bp.LocalDateTime
 
 class XChangeRepositoryImpl(private val remoteApi: RemoteApi,
@@ -42,7 +44,7 @@ class XChangeRepositoryImpl(private val remoteApi: RemoteApi,
 
     override fun selectRelatedCurrency(currency: Currency) = relatedCurrencyCode.set(currency.name)
 
-    override fun swapCurrencies() {
+    override fun swapSelectedCurrencies() {
         val c = baseCurrencyCode.get()
         baseCurrencyCode.set(relatedCurrencyCode.get())
         relatedCurrencyCode.set(c)
@@ -51,7 +53,7 @@ class XChangeRepositoryImpl(private val remoteApi: RemoteApi,
     override fun getRateHistoryProvider(currencyPair: CurrencyPair): ResourceProvider<List<RateEntry>> {
         return object : NetworkResourceProvider<List<RateEntry>, RateEntry>() {
             override fun saveCallResult(item: RateEntry) {
-                insertOrUpdateRate(currencyPair, item)
+                insertOrUpdateRate(item)
             }
 
             override fun shouldFetch(data: List<RateEntry>?): Boolean = true
@@ -75,10 +77,28 @@ class XChangeRepositoryImpl(private val remoteApi: RemoteApi,
         db.ratesDao().deleteAllRates()
     }
 
+    override fun updateAll() {
+        Currency.values().filter { it.visible }.forEach {
+            remoteApi.getLatestRates(it.name)
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(Schedulers.io())
+                    .subscribe({
+                        Log.e("qwerty", it.base)
+                        val rates = it.rates
+                        rates.forEach { (relCode, rate) ->
+                            val r = RateEntry(it.base, relCode, rate, LocalDateTime.now())
+                            insertOrUpdateRate(r)
+                        }
+                    }, {
+                        Log.e("qwerty", it.localizedMessage)
+                    })
+        }
+    }
+
     @WorkerThread
-    private fun insertOrUpdateRate(currencyPair: CurrencyPair, item: RateEntry) {
-        val baseCode = currencyPair.first.name
-        val relCode = currencyPair.second.name
+    private fun insertOrUpdateRate(item: RateEntry) {
+        val baseCode = item.baseCode
+        val relCode = item.relatedCode
 
         with(db.ratesDao()) {
             val existEntry = getLatestRateSync(baseCode, relCode)

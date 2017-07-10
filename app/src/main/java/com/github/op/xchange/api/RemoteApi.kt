@@ -8,4 +8,7 @@ interface RemoteApi {
 
     @GET("/latest")
     fun getLatestRate(@Query("base") baseCurrency: String, @Query("symbols") relatedCurrency: String): Single<ApiResponse>
+
+    @GET("/latest")
+    fun getLatestRates(@Query("base") baseCurrency: String): Single<ApiResponse>
 }

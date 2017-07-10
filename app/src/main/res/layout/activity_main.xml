@@ -35,11 +35,14 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"/>
 
-            <Button
+            <ImageButton
+                android:src="@drawable/ic_swap_horiz"
                 android:id="@+id/btnSwap"
-                android:layout_width="56dp"
-                android:layout_height="46dp"
-                android:text="swap"/>
+                android:layout_marginLeft="4dp"
+                android:layout_marginRight="4dp"
+                android:padding="2dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
 
             <Spinner
                 android:id="@+id/relCurrencySpinner"
