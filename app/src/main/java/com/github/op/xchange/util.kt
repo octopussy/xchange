@@ -18,25 +18,3 @@ class LocalDateGsonTypeAdapter : TypeAdapter<LocalDateTime>() {
 fun Float.asCurrencyValueString() : String = String.format("%.4f", this)
 
 fun LocalDateTime.formatDateTime() : String = this.format(DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM))
-
-/*
-abstract class RxMediatorLiveData<T> : MediatorLiveData<T>() {
-    private var disposable: Disposable? = null
-
-    override fun onActive() {
-        super.onActive()
-        if (disposable == null) {
-            subscribe()
-        }
-    }
-
-    override fun onInactive() {
-        super.onInactive()
-        unsubscribe()
-        disposable?.dispose()
-        disposable = null
-    }
-
-    abstract fun subscribe()
-    abstract fun unsubscribe()
-} */
