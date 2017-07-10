@@ -1,5 +1,6 @@
 package com.github.op.xchange.ui.settings
 
+import android.content.SharedPreferences
 import android.os.Bundle
 import android.widget.Toast
 import com.github.op.xchange.R
@@ -14,6 +15,7 @@ import javax.inject.Inject
 class SettingsActivity : BaseActivity() {
 
     @Inject lateinit var repository: XChangeRepository
+    @Inject lateinit var prefs: SharedPreferences
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

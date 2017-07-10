@@ -13,7 +13,7 @@ import com.github.op.xchange.R
 import com.github.op.xchange.asCurrencyValueString
 import com.github.op.xchange.entity.Currency
 import com.github.op.xchange.formatDateTime
-import com.github.op.xchange.injection.ViewModelFactory
+import com.github.op.xchange.ui.ViewModelFactory
 import com.github.op.xchange.ui.BaseActivity
 import com.github.op.xchange.ui.settings.SettingsActivity
 import com.github.op.xchange.ui.visible
@@ -87,7 +87,7 @@ class MainActivity : BaseActivity() {
 
             isNoDataTextVisible.observe(ac, Observer { noDataText.visible = it ?: false })
 
-            rateHistoryList.observe(ac, Observer {
+            quotesStream.observe(ac, Observer {
                 val list = it?.first
                 val latest = it?.second
                 rvAdapter.items = list ?: listOf()
@@ -101,7 +101,7 @@ class MainActivity : BaseActivity() {
                 }
             })
 
-            selectedCurrenciesLiveData.observe(ac, Observer {
+            selectedCurrenciesStream.observe(ac, Observer {
                 it?.let {
                     baseCurrencySpinner.adapter = CurrenciesSpinnerAdapter(this@MainActivity, it.baseList)
                     baseCurrencySpinner.setSelection(it.baseList.indexOf(it.selection.base))

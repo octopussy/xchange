@@ -15,19 +15,17 @@ class MainViewModel : ViewModel(), XComponent.Injectable {
 
     @Inject lateinit var repository: XChangeRepository
 
-    //private var quoteHistoryProvider: ResourceProvider<List<QuoteEntry>>? = null
-
-    private val _rateHistoryResource by lazy {
-        Transformations.switchMap(selectedCurrenciesLiveData) {
+    private val _rawHistoryStream by lazy {
+        Transformations.switchMap(selectedCurrenciesStream) {
             repository.getQuoteHistory(it.selection)
         }
     }
 
-    val selectedCurrenciesLiveData by lazy { SelectedCurrenciesLiveData(repository) }
+    val selectedCurrenciesStream by lazy { SelectedCurrenciesLiveData(this, repository) }
 
-    val rateHistoryList by lazy {
+    val quotesStream by lazy {
         MediatorLiveData<Pair<List<QuoteVO>?, QuoteVO?>>().apply {
-            this.addSource(_rateHistoryResource) {
+            this.addSource(_rawHistoryStream) {
                 val list = makeVOList(it)
                 if (list != null) {
                     value = Pair(list, list.firstOrNull())
@@ -36,35 +34,32 @@ class MainViewModel : ViewModel(), XComponent.Injectable {
         }
     }
 
-    private val _isLoading = MutableLiveData<Boolean>()
-    val isLoading: LiveData<Boolean>
-        get() = _isLoading
+    val isLoading = MutableLiveData<Boolean>()
 
     val isNoDataTextVisible by lazy {
         MediatorLiveData<Boolean>().apply {
-            /*addSource(_rateHistoryResource) {
-                it?.let {
-                    val listEmpty = it.data?.isEmpty() ?: true
-                    value = (it !is Resource.Loading) && listEmpty
-                }
-            }*/
+            fun updateNoDataTextStatus() {
+                val isEmpty = _rawHistoryStream.value?.isEmpty() ?: true
+                val loading = isLoading.value ?: false
+                value = isEmpty && !loading
+            }
+
+            addSource(_rawHistoryStream) { updateNoDataTextStatus() }
+            addSource(isLoading) { updateNoDataTextStatus() }
         }
     }
+
 
     fun selectBaseCurrency(currency: Currency) = repository.selectBaseCurrency(currency)
 
     fun selectRelatedCurrency(currency: Currency) = repository.selectRelatedCurrency(currency)
 
     fun refreshHistory() {
-        if (selectedCurrenciesLiveData.value != null) {
-            _isLoading.value = true
-            repository.fetchCurrentQuote(selectedCurrenciesLiveData.value!!.selection)
-                    .subscribeOn(Schedulers.io())
-                    .observeOn(AndroidSchedulers.mainThread())
-                    .onErrorComplete()
-                    .subscribe {
-                        _isLoading.value = false
-                    }
+        if (selectedCurrenciesStream.value != null) {
+            isLoading.value = true
+            repository.fetchCurrentQuote(selectedCurrenciesStream.value!!.selection) {
+                isLoading.postValue(false)
+            }
         }
     }
 

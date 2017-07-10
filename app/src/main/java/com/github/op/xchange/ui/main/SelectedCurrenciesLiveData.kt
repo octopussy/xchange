@@ -8,7 +8,7 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
 
-class SelectedCurrenciesLiveData(val repository: XChangeRepository)
+class SelectedCurrenciesLiveData(val vm: MainViewModel, val repository: XChangeRepository)
     : MediatorLiveData<SelectedCurrenciesLiveData.State>() {
 
     class State(val baseList: List<Currency>,
@@ -40,6 +40,7 @@ class SelectedCurrenciesLiveData(val repository: XChangeRepository)
                     val baseList = Currency.values().toList().filter { it.visible && selectedPair.related != it }
                     val relList = Currency.values().toList().filter { it.visible && selectedPair.base != it }
                     value = State(baseList, relList, selectedPair)
+                    vm.refreshHistory()
                 }, {
 
                 })

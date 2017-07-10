@@ -3,23 +3,29 @@ package com.github.op.xchange.repository
 import android.arch.lifecycle.LiveData
 import android.support.annotation.WorkerThread
 import android.util.Log
+import com.f2prateek.rx.preferences2.Preference
 import com.f2prateek.rx.preferences2.RxSharedPreferences
 import com.github.op.xchange.api.QuoteDTO
-import com.github.op.xchange.api.RemoteApi
+import com.github.op.xchange.api.QuotesApi
 import com.github.op.xchange.db.XChangeDatabase
 import com.github.op.xchange.entity.Currency
 import com.github.op.xchange.entity.CurrencyPair
 import com.github.op.xchange.entity.QuoteEntry
 import io.reactivex.Completable
 import io.reactivex.Observable
+import io.reactivex.Single
+import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.functions.BiFunction
+import io.reactivex.schedulers.Schedulers
 
-class XChangeRepositoryImpl(private val remoteApi: RemoteApi,
+class XChangeRepositoryImpl(private val quotesApi: QuotesApi,
                             private val db: XChangeDatabase,
                             rxPrefs: RxSharedPreferences) : XChangeRepository {
 
     private val baseCurrencyCode = rxPrefs.getString("baseCurrencyCode")
     private val relatedCurrencyCode = rxPrefs.getString("relatedCurrencyCode")
+
+    override val updateIntervalSecPref = rxPrefs.getLong("updateIntervalSec", 2 * 60 * 60)
 
     init {
         val baseCode = baseCurrencyCode.get()
@@ -38,6 +44,10 @@ class XChangeRepositoryImpl(private val remoteApi: RemoteApi,
             })
         }
 
+    override val selectedCurrencyPair2: LiveData<CurrencyPair>
+        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
+
+
     override fun getQuoteHistory(currencyPair: CurrencyPair): LiveData<List<QuoteEntry>>
             = db.quotesDao().getQuoteHistory(currencyPair.toString())
 
@@ -51,10 +61,21 @@ class XChangeRepositoryImpl(private val remoteApi: RemoteApi,
         relatedCurrencyCode.set(c)
     }
 
-    override fun fetchCurrentQuote(currencyPair: CurrencyPair): Completable {
-        return remoteApi.getLatestQuote(currencyPair.toString())
-                .doOnError { Log.e("xchange", it.localizedMessage) }
-                .doOnSuccess { saveQuotes(it) }.toCompletable()
+    override fun fetchCurrentQuote(currencyPair: CurrencyPair, callback: (Boolean) -> Unit) {
+        quotesApi.getLatestQuote(currencyPair.toString())
+                .subscribeOn(Schedulers.io())
+                .observeOn(Schedulers.io())
+                .flatMap { Single.fromCallable { saveQuotes(it) } }
+                .subscribe({
+                    callback(true)
+                }, {
+                    callback(false)
+                })
+    }
+
+    override fun fetchCurrentQuoteForSelectedPair(callback: (Boolean) -> Unit) {
+        val p = CurrencyPair(Currency.fromString(baseCurrencyCode.get()), Currency.fromString(relatedCurrencyCode.get()))
+        fetchCurrentQuote(p, callback)
     }
 
     @WorkerThread

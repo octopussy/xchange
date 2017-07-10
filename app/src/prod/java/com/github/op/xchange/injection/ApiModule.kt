@@ -1,7 +1,7 @@
 package com.github.op.xchange.injection
 
 import com.github.op.xchange.BuildConfig
-import com.github.op.xchange.api.RemoteApi
+import com.github.op.xchange.api.QuotesApi
 import com.google.gson.Gson
 import dagger.Module
 import dagger.Provides
@@ -15,7 +15,8 @@ import javax.inject.Singleton
 @Module
 class ApiModule {
     @Provides @Singleton
-    fun remoteApi(gson: Gson): RemoteApi {
+    fun remoteApi(gson: Gson): QuotesApi {
+
         val ENDPOINT = "https://forex.1forge.com/"
 
         val interceptor = HttpLoggingInterceptor()
@@ -31,8 +32,8 @@ class ApiModule {
                 .build()
 
 
-        // iforge key t8b06ZdhJHrSZtZEIIrd8VVcTd8nbLgJ
+        // 1forge key t8b06ZdhJHrSZtZEIIrd8VVcTd8nbLgJ
 
-        return retrofit.create(RemoteApi::class.java)
+        return retrofit.create(QuotesApi::class.java)
     }
 }

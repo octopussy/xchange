@@ -1,5 +1,6 @@
 package com.github.op.xchange.injection
 
+import com.github.op.xchange.UpdateService
 import com.github.op.xchange.XChangeApp
 import com.github.op.xchange.ui.main.MainViewModel
 import com.github.op.xchange.ui.settings.SettingsActivity
@@ -11,6 +12,8 @@ import javax.inject.Singleton
 interface XComponent {
 
     fun inject(xChangeApp: XChangeApp)
+
+    fun inject(updateService: UpdateService)
 
     fun inject(activity: SettingsActivity)
 
