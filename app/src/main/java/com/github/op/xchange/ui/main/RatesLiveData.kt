@@ -4,18 +4,19 @@ import android.arch.lifecycle.MediatorLiveData
 import com.github.op.xchange.entity.CurrencyPair
 import com.github.op.xchange.entity.RateEntry
 import com.github.op.xchange.repository.XChangeRepository
-import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
-import io.reactivex.functions.BiFunction
 import io.reactivex.schedulers.Schedulers
+import org.threeten.bp.LocalDateTime
+import java.util.*
 
 class RatesLiveData(val repository: XChangeRepository)
     : MediatorLiveData<RatesLiveData.State>() {
 
     sealed class State {
         object Loading : State()
-        class Success(val latestRate: RateEntry, val list: List<RateEntry>) : State()
+        object SuccessEmpty : State()
+        class Success(val latestRate: RateEntry, val list: List<RateVO>) : State()
         class Error(val throwable: Throwable) : State()
     }
 
@@ -23,6 +24,7 @@ class RatesLiveData(val repository: XChangeRepository)
 
     var selectedCurrencies: CurrencyPair? = null
         set(value) {
+            if (this.value == State.Loading) return
             field = value
             this.value = State.Loading
             subscribe()
@@ -43,24 +45,45 @@ class RatesLiveData(val repository: XChangeRepository)
         }
     }
 
-    private fun subscribe() {
-        class Combine(val latestRate: RateEntry, val list: List<RateEntry>)
+    fun refreshHistory() {
+        subscribe()
+    }
 
+    private fun subscribe() {
         if (selectedCurrencies != null) {
             disposable?.dispose()
-            val latest = repository.getLatestRateValue2(selectedCurrencies!!)
-            val history = repository.getRateHistory(selectedCurrencies!!)
-            disposable = Observable.combineLatest(latest, history,
-                    BiFunction<RateEntry, List<RateEntry>, Combine> { l, h ->
-                        Combine(l, h)
-                    })
+            disposable = repository.getRateHistory(selectedCurrencies!!)
                     .subscribeOn(Schedulers.io())
                     .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe({
-                        this.value = State.Success(it.latestRate, it.list)
+                    .subscribe({ rates ->
+                        val latestRate = rates.maxBy { it.date }
+                        if (latestRate != null) {
+                            this.value = State.Success(latestRate, makeVOList(rates))
+                        } else {
+                            this.value = State.SuccessEmpty
+                        }
                     }, {
                         this.value = State.Error(it)
                     })
         }
+    }
+
+    private fun makeVOList(l: List<RateEntry>): List<RateVO> {
+        val map = TreeMap<LocalDateTime, RateEntry>()
+        l.forEach { map.put(it.date, it) }
+
+        val result = mutableListOf<RateVO>()
+
+        var pointer = map.pollLastEntry()
+        while (pointer != null) {
+            val prev = map.lastEntry()
+            val thisRate = pointer.value.rate
+            val diff = if (prev != null) thisRate - prev.value.rate else 0f
+
+            result.add(RateVO(thisRate, diff, pointer.value.date))
+            pointer = map.pollLastEntry()
+        }
+
+        return result
     }
 }

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:background="@color/colorAccent"
+                android:paddingLeft="16dp"
+                android:paddingRight="16dp">
+
+    <TextView
+        android:id="@+id/textValue"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_centerVertical="true"
+        android:text="60,3434"
+        android:textColor="@android:color/black"
+        android:textSize="15sp"/>
+
+    <ImageView
+        android:id="@+id/icDiff"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_marginLeft="80dp"
+        android:layout_marginStart="80dp"
+        android:scaleType="center"
+        android:src="@drawable/ic_arrow_drop_up"/>
+
+    <TextView
+        android:id="@+id/textDiff"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_marginLeft="4dp"
+        android:layout_marginStart="4dp"
+        android:layout_toRightOf="@id/icDiff"
+        android:text="60,3434"
+        android:textSize="11sp"/>
+
+    <TextView
+        android:id="@+id/textDate"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentRight="true"
+        android:layout_centerVertical="true"
+        android:text="2017-07-10"
+        android:textSize="11sp"/>
+
+
+</RelativeLayout>

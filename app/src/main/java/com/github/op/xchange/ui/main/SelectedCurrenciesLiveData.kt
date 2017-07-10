@@ -11,16 +11,9 @@ import io.reactivex.schedulers.Schedulers
 class SelectedCurrenciesLiveData(val repository: XChangeRepository)
     : MediatorLiveData<SelectedCurrenciesLiveData.State>() {
 
-    private var currencies = listOf<Currency>()
-
-    sealed class State {
-        object Loading : State()
-        class Success(val baseList: List<Currency>,
-                      val relList: List<Currency>,
-                      val selection: CurrencyPair) : State()
-
-        class Error(val throwable: Throwable) : State()
-    }
+    class State(val baseList: List<Currency>,
+                val relList: List<Currency>,
+                val selection: CurrencyPair)
 
     private var disposable: Disposable? = null
 
@@ -41,29 +34,16 @@ class SelectedCurrenciesLiveData(val repository: XChangeRepository)
     }
 
     private fun subscribe() {
-        value = State.Loading
-        repository.getAvailableCurrencies()
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe { result, error ->
-                    if (result != null) {
-                        currencies = result
-                        subscribeToSelection()
-                    } else {
-                        value = State.Error(error)
-                    }
-                }
-    }
-
-    private fun subscribeToSelection() {
         unsubscribe()
         disposable = repository.selectedCurrencyPair
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe({
-                    value = State.Success(currencies, currencies, it)
+                .subscribe({ selectedPair ->
+                    val baseList = Currency.values().toList().filter { it.visible && selectedPair.second != it }
+                    val relList = Currency.values().toList().filter { it.visible && selectedPair.first != it }
+                    value = State(baseList, relList, selectedPair)
                 }, {
-                    value = State.Error(it)
+
                 })
     }
 

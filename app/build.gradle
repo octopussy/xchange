@@ -31,7 +31,7 @@ android {
     defaultConfig {
         applicationId "com.github.op.xchange"
         minSdkVersion 16
-        targetSdkVersion 26
+        targetSdkVersion 25
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
@@ -43,6 +43,14 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+
+    productFlavors {
+        dev {
+            applicationIdSuffix ".dev"
+        }
+        prod {
+        }
+    }
 }
 
 dependencies {
@@ -51,6 +59,7 @@ dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
 
     compile "com.android.support:appcompat-v7:$supportVersion"
+    compile "com.android.support:recyclerview-v7:$supportVersion"
     //compile 'com.android.support.constraint:constraint-layout:1.0.2'
     //compile "com.android.support:support-v4:$supportVersion"
 
@@ -71,6 +80,9 @@ dependencies {
 
     compile "com.google.dagger:dagger:${daggerVersion}"
     kapt "com.google.dagger:dagger-compiler:${daggerVersion}"
+
+    compile "com.jakewharton:butterknife:8.7.0"
+    kapt "com.jakewharton:butterknife-compiler:8.7.0"
 
     compile "android.arch.lifecycle:extensions:${archVersion}"
     compile "android.arch.lifecycle:reactivestreams:${archVersion}"

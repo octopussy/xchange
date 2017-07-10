@@ -4,6 +4,7 @@ import android.arch.lifecycle.Observer
 import android.arch.lifecycle.ViewModelProviders
 import android.content.Intent
 import android.os.Bundle
+import android.support.v7.widget.LinearLayoutManager
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
@@ -11,7 +12,9 @@ import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Toast
 import com.github.op.xchange.R
+import com.github.op.xchange.asCurrencyValueString
 import com.github.op.xchange.entity.Currency
+import com.github.op.xchange.formatDateTime
 import com.github.op.xchange.injection.ViewModelFactory
 import com.github.op.xchange.ui.BaseActivity
 import com.github.op.xchange.ui.settings.SettingsActivity
@@ -27,13 +30,14 @@ class MainActivity : BaseActivity() {
 
     private lateinit var relCurrencyAdapter: ArrayAdapter<Currency>
 
+    private lateinit var rvAdapter: RateHistoryListAdapter
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         viewModel = ViewModelProviders.of(this, ViewModelFactory(application))[MainViewModel::class.java]
 
         setupView()
-
         setupObservers()
     }
 
@@ -53,17 +57,22 @@ class MainActivity : BaseActivity() {
     }
 
     private fun setupView() {
+        rvRateHistory.layoutManager = LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
+        rvRateHistory.setHasFixedSize(true)
+        rvAdapter = RateHistoryListAdapter(this)
+        rvRateHistory.adapter = rvAdapter
+
         baseCurrencyAdapter = ArrayAdapter<Currency>(this, android.R.layout.simple_spinner_item).apply {
             setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         }
-        firstCurrencySpinner.adapter = baseCurrencyAdapter
+        baseCurrencySpinner.adapter = baseCurrencyAdapter
 
         relCurrencyAdapter = ArrayAdapter<Currency>(this, android.R.layout.simple_spinner_item).apply {
             setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         }
-        secondCurrencySpinner.adapter = relCurrencyAdapter
+        relCurrencySpinner.adapter = relCurrencyAdapter
 
-        firstCurrencySpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+        baseCurrencySpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onNothingSelected(parent: AdapterView<*>?) {}
 
             override fun onItemSelected(parent: AdapterView<*>, view: View, position: Int, id: Long) {
@@ -72,7 +81,7 @@ class MainActivity : BaseActivity() {
             }
         }
 
-        secondCurrencySpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+        relCurrencySpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onNothingSelected(parent: AdapterView<*>?) {}
 
             override fun onItemSelected(parent: AdapterView<*>, view: View, position: Int, id: Long) {
@@ -81,58 +90,59 @@ class MainActivity : BaseActivity() {
             }
         }
 
-        btnRetry.setOnClickListener { viewModel.retryLoading() }
+        swipeRefreshLayout.setOnRefreshListener { viewModel.refreshHistory() }
     }
 
     private fun setupObservers() {
         viewModel.rateHistoryLiveData.observe(this, Observer {
-            textView.text = ""
-            lastRateValueTextView.visible = false
+
+            noDataText.visible =false
+            mainContentPanel.visible = false
+            progressBar.visible = false
+
             when (it) {
-                is RatesLiveData.State.Loading -> {}
-                is RatesLiveData.State.Error -> showError(it.throwable)
+                is RatesLiveData.State.Loading -> {
+                    progressBar.visible = !swipeRefreshLayout.isRefreshing
+                }
+
+                is RatesLiveData.State.SuccessEmpty -> {
+                    swipeRefreshLayout.isRefreshing = false
+                    mainContentPanel.visible = true
+                    noDataText.visible = true
+                }
+
+                is RatesLiveData.State.Error -> {
+                    swipeRefreshLayout.isRefreshing = false
+                    mainContentPanel.visible = true
+                    showErrorToast(it.throwable)
+                }
+
                 is RatesLiveData.State.Success -> {
-                    lastRateValueTextView.visible = true
-                    lastRateValueTextView.text = it.latestRate.rate.toString()
-                    it.list.forEach { textView.append("$it\n") }
+                    swipeRefreshLayout.isRefreshing = false
+                    mainContentPanel.visible = true
+                    rvAdapter.items = it.list
+
+                    lastRateValueTextView.text = it.latestRate.rate.asCurrencyValueString()
+                    lastRateUpdateDateTextView.text = resources.getString(R.string.label_last_update,
+                            it.latestRate.date.formatDateTime())
                 }
             }
         })
 
         viewModel.selectedCurrenciesLiveData.observe(this, Observer {
-            hideAll()
-            when (it) {
-                is SelectedCurrenciesLiveData.State.Error -> {
-                    errorLayout.visible = true
-                    showError(it.throwable)
-                }
+            it?.let {
+                baseCurrencyAdapter.clear()
+                baseCurrencyAdapter.addAll(it.baseList)
+                baseCurrencySpinner.setSelection(baseCurrencyAdapter.getPosition(it.selection.first))
 
-                is SelectedCurrenciesLiveData.State.Loading -> progressBar.visible = true
-
-                is SelectedCurrenciesLiveData.State.Success -> {
-                    content.visible = true
-
-                    baseCurrencyAdapter.clear()
-                    baseCurrencyAdapter.addAll(it.baseList)
-                    val pos1 = baseCurrencyAdapter.getPosition(it.selection.first)
-                    firstCurrencySpinner.setSelection(pos1)
-
-                    relCurrencyAdapter.clear()
-                    relCurrencyAdapter.addAll(it.relList)
-                    val pos2 = relCurrencyAdapter.getPosition(it.selection.second)
-                    secondCurrencySpinner.setSelection(pos2)
-                }
+                relCurrencyAdapter.clear()
+                relCurrencyAdapter.addAll(it.relList)
+                relCurrencySpinner.setSelection(relCurrencyAdapter.getPosition(it.selection.second))
             }
         })
     }
 
-    private fun showError(th: Throwable) {
+    private fun showErrorToast(th: Throwable) {
         Toast.makeText(this, th.localizedMessage, Toast.LENGTH_LONG).show()
-    }
-
-    private fun hideAll() {
-        errorLayout.visible = false
-        progressBar.visible = false
-        content.visible = false
     }
 }

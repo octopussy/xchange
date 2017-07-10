@@ -4,6 +4,8 @@ import android.arch.lifecycle.ViewModel
 import com.github.op.xchange.entity.Currency
 import com.github.op.xchange.injection.XComponent
 import com.github.op.xchange.repository.XChangeRepository
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.schedulers.Schedulers
 import javax.inject.Inject
 
 class MainViewModel : ViewModel(), XComponent.Injectable {
@@ -16,11 +18,7 @@ class MainViewModel : ViewModel(), XComponent.Injectable {
         RatesLiveData(repository).apply {
             addSource(selectedCurrenciesLiveData) {
                 it?.let {
-                    selectedCurrencies =
-                            if (it is SelectedCurrenciesLiveData.State.Success)
-                                it.selection
-                            else
-                                null
+                    selectedCurrencies = it.selection
                 }
             }
         }
@@ -30,8 +28,7 @@ class MainViewModel : ViewModel(), XComponent.Injectable {
 
     fun selectRelatedCurrency(currency: Currency) = repository.selectRelatedCurrency(currency)
 
-    fun retryLoading() {
-    }
+    fun refreshHistory() = rateHistoryLiveData.refreshHistory()
 
     override fun inject(component: XComponent) {
         component.inject(this)

@@ -27,12 +27,6 @@ public interface RatesDao {
     @Query(DaoHelper.QUERY_RATE_LIST + " LIMIT 1")
     RateEntry getLatestRateSync(String baseCode, String relatedCode);
 
-    @Query(DaoHelper.QUERY_RATE_LIST + " LIMIT 1")
-    LiveData<RateEntry> getLatestRateLiveData(String baseCode, String relatedCode);
-
-    @Query(DaoHelper.QUERY_RATE_LIST + " LIMIT 1")
-    Flowable<RateEntry> getLatestRate(String baseCode, String relatedCode);
-
     @Insert
     void addRate(@NotNull RateEntry rate);
 

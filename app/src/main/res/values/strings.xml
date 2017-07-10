@@ -6,4 +6,6 @@
     <string name="error">error</string>
     <string name="label_loading_error">Loading error</string>
     <string name="btn_retry">Retry</string>
+    <string name="label_last_update">Last update: %s</string>
+    <string name="no_data">no data</string>
 </resources>

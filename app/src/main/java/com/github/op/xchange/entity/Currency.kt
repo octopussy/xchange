@@ -1,17 +1,52 @@
 package com.github.op.xchange.entity
 
-import android.arch.persistence.room.Entity
-import android.arch.persistence.room.PrimaryKey
-import com.github.op.xchange.entity.Currency.Companion.TABLE_NAME
-
 typealias CurrencyPair = Pair<Currency, Currency>
 
-@Entity(tableName = TABLE_NAME)
-data class Currency(@PrimaryKey val code: String) {
+enum class Currency(val visible:Boolean = true) {
+    UNKNOWN(visible = false),
+    USD,
+    EUR,
+    UAH,
+    RUB,
+    AUD,
+    BGN,
+    BRL,
+    CAD,
+    CHF,
+    CNY,
+    CZK,
+    DKK,
+    GBP,
+    HKD,
+    HRK,
+    HUF,
+    IDR,
+    ILS,
+    INR,
+    JPY,
+    KRW,
+    MXN,
+    MYR,
+    NOK,
+    NZD,
+    PHP,
+    PLN,
+    RON,
+    SEK,
+    SGD,
+    THB,
+    TRY,
+    ZAR;
 
-    override fun toString(): String = code
+    override fun toString(): String = name
 
     companion object {
-        const val TABLE_NAME = "currencies"
+        fun fromString(s: String): Currency {
+            try {
+                return valueOf(s)
+            } catch (_: IllegalArgumentException){
+                return UNKNOWN
+            }
+        }
     }
 }

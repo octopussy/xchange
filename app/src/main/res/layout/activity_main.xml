@@ -14,34 +14,10 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center"/>
 
-    <LinearLayout
-        android:id="@+id/errorLayout"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:gravity="center"
-        android:orientation="vertical">
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            android:text="@string/label_loading_error"
-            android:textColor="#ff0000"/>
-
-        <Button
-            android:id="@+id/btnRetry"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/btn_retry"/>
-    </LinearLayout>
-
     <RelativeLayout
-        android:id="@+id/content"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical">
-
 
         <LinearLayout
             android:id="@+id/_currencies"
@@ -49,10 +25,11 @@
             android:layout_height="wrap_content"
             android:gravity="center"
             android:orientation="horizontal"
-            android:padding="8dp">
+            android:paddingLeft="8dp"
+            android:paddingRight="8dp">
 
             <Spinner
-                android:id="@+id/firstCurrencySpinner"
+                android:id="@+id/baseCurrencySpinner"
                 style="@style/Widget.AppCompat.Spinner.Underlined"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
@@ -66,7 +43,7 @@
                 android:text="to"/>
 
             <Spinner
-                android:id="@+id/secondCurrencySpinner"
+                android:id="@+id/relCurrencySpinner"
                 style="@style/Widget.AppCompat.Spinner.Underlined"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
@@ -74,52 +51,67 @@
 
         </LinearLayout>
 
-        <LinearLayout
-            android:id="@+id/lastRatePanel"
-            android:layout_width="match_parent"
-            android:layout_height="76dp"
-            android:layout_below="@id/_currencies"
-            android:orientation="vertical"
-            android:gravity="center">
-
-            <TextView
-                android:id="@+id/lastRateValueTextView"
-                android:textSize="36sp"
-                android:textStyle="bold"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"/>
-            
-            <TextView
-                android:id="@+id/lastRateUpdateDateTextView"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"/>
-
-        </LinearLayout>
-
-        <android.support.v4.widget.SwipeRefreshLayout
-            android:id="@+id/swipeRefreshLayout"
+        <RelativeLayout
+            android:id="@+id/mainContentPanel"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_below="@id/lastRatePanel">
+            android:layout_below="@id/_currencies">
 
-            <ScrollView
+            <LinearLayout
+                android:id="@+id/latestRatePanel"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent">
+                android:layout_height="80dp"
+                android:gravity="center_vertical"
+                android:orientation="vertical"
+                android:paddingLeft="32dp"
+                android:paddingRight="32dp">
 
                 <TextView
-                    android:id="@+id/textView"
+                    android:id="@+id/lastRateValueTextView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@android:color/black"
+                    android:textSize="36sp"
+                    android:textStyle="bold"/>
+
+                <TextView
+                    android:id="@+id/lastRateUpdateDateTextView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="12sp"/>
+
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/noDataText"
+                android:text="@string/no_data"
+                android:textColor="@color/noData"
+                android:textSize="26sp"
+                android:layout_centerHorizontal="true"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"/>
+
+            <android.support.v4.widget.SwipeRefreshLayout
+                android:id="@+id/swipeRefreshLayout"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_below="@id/latestRatePanel">
+
+                <android.support.v7.widget.RecyclerView
+                    android:id="@+id/rvRateHistory"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"/>
 
-            </ScrollView>
+            </android.support.v4.widget.SwipeRefreshLayout>
 
-        </android.support.v4.widget.SwipeRefreshLayout>
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="2dp"
+                android:layout_below="@id/latestRatePanel"
+                android:background="@drawable/bottom_shadow"/>
 
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="2dp"
-            android:layout_below="@id/lastRatePanel"
-            android:background="@drawable/bottom_shadow"/>
+        </RelativeLayout>
 
     </RelativeLayout>
 

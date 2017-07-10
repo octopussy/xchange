@@ -7,17 +7,9 @@ import com.github.op.xchange.entity.RateEntry
 import io.reactivex.Completable
 import io.reactivex.Observable
 
-/**
- * @author mcpussy
- * @date 08/07/2017
- */
-interface XChangeRepository : CurrenciesDataSource {
+interface XChangeRepository {
 
     val selectedCurrencyPair: Observable<CurrencyPair>
-
-    fun getLatestRateValue(currencyPair: CurrencyPair): LiveData<RateEntry>
-
-    fun getLatestRateValue2(currencyPair: CurrencyPair): Observable<RateEntry>
 
     fun getRateHistory(currencyPair: CurrencyPair): Observable<List<RateEntry>>
 
