@@ -4,17 +4,15 @@ import android.arch.lifecycle.LiveData
 import android.support.annotation.WorkerThread
 import android.util.Log
 import com.f2prateek.rx.preferences2.RxSharedPreferences
+import com.github.op.xchange.api.QuoteDTO
 import com.github.op.xchange.api.RemoteApi
 import com.github.op.xchange.db.XChangeDatabase
 import com.github.op.xchange.entity.Currency
 import com.github.op.xchange.entity.CurrencyPair
-import com.github.op.xchange.entity.RateEntry
+import com.github.op.xchange.entity.QuoteEntry
 import io.reactivex.Completable
 import io.reactivex.Observable
-import io.reactivex.Single
 import io.reactivex.functions.BiFunction
-import io.reactivex.schedulers.Schedulers
-import org.threeten.bp.LocalDateTime
 
 class XChangeRepositoryImpl(private val remoteApi: RemoteApi,
                             private val db: XChangeDatabase,
@@ -36,9 +34,12 @@ class XChangeRepositoryImpl(private val remoteApi: RemoteApi,
             val firstObs = baseCurrencyCode.asObservable()
             val secondObs = relatedCurrencyCode.asObservable()
             return Observable.combineLatest(firstObs, secondObs, BiFunction { t1, t2 ->
-                Pair(Currency.fromString(t1), Currency.fromString(t2))
+                CurrencyPair(Currency.fromString(t1), Currency.fromString(t2))
             })
         }
+
+    override fun getQuoteHistory(currencyPair: CurrencyPair): LiveData<List<QuoteEntry>>
+            = db.quotesDao().getQuoteHistory(currencyPair.toString())
 
     override fun selectBaseCurrency(currency: Currency) = baseCurrencyCode.set(currency.name)
 
@@ -50,65 +51,26 @@ class XChangeRepositoryImpl(private val remoteApi: RemoteApi,
         relatedCurrencyCode.set(c)
     }
 
-    override fun getRateHistoryProvider(currencyPair: CurrencyPair): ResourceProvider<List<RateEntry>> {
-        return object : NetworkResourceProvider<List<RateEntry>, RateEntry>() {
-            override fun saveCallResult(item: RateEntry) {
-                insertOrUpdateRate(item)
-            }
-
-            override fun shouldFetch(data: List<RateEntry>?): Boolean = true
-
-            override fun loadFromDb(): LiveData<List<RateEntry>> {
-                return db.ratesDao().getRatesLD(currencyPair.first.name, currencyPair.second.name)
-            }
-
-            override fun createApiCall(): Single<RateEntry> {
-                val baseCode = currencyPair.first.name
-                val relCode = currencyPair.second.name
-                return remoteApi.getLatestRate(currencyPair.first.name, currencyPair.second.name).map {
-                    val rate = it.rates[relCode] ?: throw RuntimeException("Unknown currency")
-                    return@map RateEntry(baseCode, relCode, rate, LocalDateTime.now())
-                }
-            }
-        }
-    }
-
-    override fun clearData(): Completable = Completable.fromAction {
-        db.ratesDao().deleteAllRates()
-    }
-
-    override fun updateAll() {
-        Currency.values().filter { it.visible }.forEach {
-            remoteApi.getLatestRates(it.name)
-                    .subscribeOn(Schedulers.io())
-                    .observeOn(Schedulers.io())
-                    .subscribe({
-                        Log.e("qwerty", it.base)
-                        val rates = it.rates
-                        rates.forEach { (relCode, rate) ->
-                            val r = RateEntry(it.base, relCode, rate, LocalDateTime.now())
-                            insertOrUpdateRate(r)
-                        }
-                    }, {
-                        Log.e("qwerty", it.localizedMessage)
-                    })
-        }
+    override fun fetchCurrentQuote(currencyPair: CurrencyPair): Completable {
+        return remoteApi.getLatestQuote(currencyPair.toString())
+                .doOnError { Log.e("xchange", it.localizedMessage) }
+                .doOnSuccess { saveQuotes(it) }.toCompletable()
     }
 
     @WorkerThread
-    private fun insertOrUpdateRate(item: RateEntry) {
-        val baseCode = item.baseCode
-        val relCode = item.relatedCode
-
-        with(db.ratesDao()) {
-            val existEntry = getLatestRateSync(baseCode, relCode)
-            val now = LocalDateTime.now()
-            if (existEntry == null || existEntry.rate != item.rate) {
-                addRate(item)
-            } else {
-                existEntry.date = now
-                updateRate(existEntry)
+    private fun saveQuotes(l: List<QuoteDTO>) {
+        l.forEach {
+            with(db.quotesDao()) {
+                val existQuotes = getQuotesByTimeSync(it.pair, it.dateTime)
+                if (existQuotes.isEmpty()) {
+                    addQuoteEntry(QuoteEntry(it.pair, it.price, it.dateTime))
+                }
             }
         }
+
+    }
+
+    override fun clearData(): Completable = Completable.fromAction {
+        db.quotesDao().deleteAllRates()
     }
 }

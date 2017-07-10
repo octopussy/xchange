@@ -37,7 +37,6 @@ class XChangeApp : Application() {
     fun onAlarmGoesOff() {
         Log.d("XChangeApp", "onAlarmGoesOff")
         prefs.edit().putBoolean(KEY_ALARM_SET, false).commit()
-        repository.updateAll()
         setupAlarm()
     }
 

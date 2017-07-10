@@ -16,7 +16,7 @@ import com.github.op.xchange.ui.visible
 
 class RateHistoryListAdapter(val context: Context) : RecyclerView.Adapter<RateHistoryListAdapter.VH>() {
 
-    var items = listOf<RateVO>()
+    var items = listOf<QuoteVO>()
         set(value) {
             field = value
             notifyDataSetChanged()

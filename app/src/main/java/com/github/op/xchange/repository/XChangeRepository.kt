@@ -3,7 +3,7 @@ package com.github.op.xchange.repository
 import android.arch.lifecycle.LiveData
 import com.github.op.xchange.entity.Currency
 import com.github.op.xchange.entity.CurrencyPair
-import com.github.op.xchange.entity.RateEntry
+import com.github.op.xchange.entity.QuoteEntry
 import io.reactivex.Completable
 import io.reactivex.Observable
 
@@ -11,7 +11,7 @@ interface XChangeRepository {
 
     val selectedCurrencyPair: Observable<CurrencyPair>
 
-    fun getRateHistoryProvider(currencyPair: CurrencyPair): ResourceProvider<List<RateEntry>>
+    fun getQuoteHistory(currencyPair: CurrencyPair): LiveData<List<QuoteEntry>>
 
     fun selectBaseCurrency(currency: Currency)
 
@@ -19,7 +19,7 @@ interface XChangeRepository {
 
     fun swapSelectedCurrencies()
 
-    fun clearData(): Completable
+    fun fetchCurrentQuote(currencyPair: CurrencyPair): Completable
 
-    fun updateAll()
+    fun clearData(): Completable
 }

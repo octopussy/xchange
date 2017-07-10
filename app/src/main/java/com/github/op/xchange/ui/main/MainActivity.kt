@@ -104,10 +104,10 @@ class MainActivity : BaseActivity() {
             selectedCurrenciesLiveData.observe(ac, Observer {
                 it?.let {
                     baseCurrencySpinner.adapter = CurrenciesSpinnerAdapter(this@MainActivity, it.baseList)
-                    baseCurrencySpinner.setSelection(it.baseList.indexOf(it.selection.first))
+                    baseCurrencySpinner.setSelection(it.baseList.indexOf(it.selection.base))
 
                     relCurrencySpinner.adapter = CurrenciesSpinnerAdapter(this@MainActivity, it.relList)
-                    relCurrencySpinner.setSelection(it.relList.indexOf(it.selection.second))
+                    relCurrencySpinner.setSelection(it.relList.indexOf(it.selection.related))
                 }
             })
         }

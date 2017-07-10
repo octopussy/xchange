@@ -2,7 +2,9 @@ package com.github.op.xchange.entity
 
 import android.content.Context
 
-typealias CurrencyPair = Pair<Currency, Currency>
+data class CurrencyPair(val base: Currency, val related: Currency) {
+    override fun toString(): String = "$base$related"
+}
 
 enum class Currency(val visible: Boolean = true) {
     UNKNOWN(visible = false),

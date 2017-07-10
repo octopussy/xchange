@@ -37,8 +37,8 @@ class SelectedCurrenciesLiveData(val repository: XChangeRepository)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe({ selectedPair ->
-                    val baseList = Currency.values().toList().filter { it.visible && selectedPair.second != it }
-                    val relList = Currency.values().toList().filter { it.visible && selectedPair.first != it }
+                    val baseList = Currency.values().toList().filter { it.visible && selectedPair.related != it }
+                    val relList = Currency.values().toList().filter { it.visible && selectedPair.base != it }
                     value = State(baseList, relList, selectedPair)
                 }, {
 

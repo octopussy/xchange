@@ -16,14 +16,12 @@ import javax.inject.Singleton
 class ApiModule {
     @Provides @Singleton
     fun remoteApi(gson: Gson): RemoteApi {
-        val builder = OkHttpClient.Builder()
+        val ENDPOINT = "https://forex.1forge.com/"
 
         val interceptor = HttpLoggingInterceptor()
         interceptor.level = if (BuildConfig.DEBUG) HttpLoggingInterceptor.Level.BODY else HttpLoggingInterceptor.Level.NONE
-
-        builder.addInterceptor(interceptor)
-
-        val ENDPOINT = "http://api.fixer.io/"
+        val builder = OkHttpClient.Builder()
+                .addInterceptor(interceptor)
 
         val retrofit = Retrofit.Builder()
                 .baseUrl(ENDPOINT)
@@ -32,7 +30,9 @@ class ApiModule {
                 .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
                 .build()
 
+
+        // iforge key t8b06ZdhJHrSZtZEIIrd8VVcTd8nbLgJ
+
         return retrofit.create(RemoteApi::class.java)
     }
-
 }

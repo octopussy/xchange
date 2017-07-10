@@ -4,13 +4,13 @@ import android.arch.persistence.room.Room
 import android.content.Context
 import android.content.SharedPreferences
 import com.f2prateek.rx.preferences2.RxSharedPreferences
-import com.github.op.xchange.LocalDateGsonTypeAdapter
+import com.github.op.xchange.GsonLocalDateTimeTypeAdapter
 import com.github.op.xchange.db.XChangeDatabase
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import dagger.Module
 import dagger.Provides
-import org.threeten.bp.LocalDate
+import org.threeten.bp.LocalDateTime
 import javax.inject.Singleton
 
 @Module
@@ -20,7 +20,7 @@ class AppModule(private val applicationContext: Context) {
     fun applicationContext() = applicationContext
 
     @Provides @Singleton
-    fun gson(): Gson = GsonBuilder().registerTypeAdapter(LocalDate::class.java, LocalDateGsonTypeAdapter()).create()
+    fun gson(): Gson = GsonBuilder().registerTypeAdapter(LocalDateTime::class.java, GsonLocalDateTimeTypeAdapter()).create()
 
     @Provides @Singleton
     fun prefs(context: Context): SharedPreferences = context.getSharedPreferences("XChangeSharedPrefs", Context.MODE_PRIVATE)

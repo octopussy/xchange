@@ -1,15 +1,12 @@
 package com.github.op.xchange.ui.main
 
-import android.arch.lifecycle.LiveData
-import android.arch.lifecycle.MediatorLiveData
-import android.arch.lifecycle.Transformations
-import android.arch.lifecycle.ViewModel
+import android.arch.lifecycle.*
 import com.github.op.xchange.entity.Currency
-import com.github.op.xchange.entity.RateEntry
+import com.github.op.xchange.entity.QuoteEntry
 import com.github.op.xchange.injection.XComponent
-import com.github.op.xchange.repository.Resource
-import com.github.op.xchange.repository.ResourceProvider
 import com.github.op.xchange.repository.XChangeRepository
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.schedulers.Schedulers
 import org.threeten.bp.LocalDateTime
 import java.util.*
 import javax.inject.Inject
@@ -18,22 +15,20 @@ class MainViewModel : ViewModel(), XComponent.Injectable {
 
     @Inject lateinit var repository: XChangeRepository
 
-    private var rateHistoryProvider: ResourceProvider<List<RateEntry>>? = null
+    //private var quoteHistoryProvider: ResourceProvider<List<QuoteEntry>>? = null
 
     private val _rateHistoryResource by lazy {
         Transformations.switchMap(selectedCurrenciesLiveData) {
-            rateHistoryProvider = repository.getRateHistoryProvider(it.selection)
-            rateHistoryProvider!!.reload()
-            rateHistoryProvider!!.result
+            repository.getQuoteHistory(it.selection)
         }
     }
 
     val selectedCurrenciesLiveData by lazy { SelectedCurrenciesLiveData(repository) }
 
     val rateHistoryList by lazy {
-        MediatorLiveData<Pair<List<RateVO>?, RateVO?>>().apply {
+        MediatorLiveData<Pair<List<QuoteVO>?, QuoteVO?>>().apply {
             this.addSource(_rateHistoryResource) {
-                val list = makeVOList(it?.data)
+                val list = makeVOList(it)
                 if (list != null) {
                     value = Pair(list, list.firstOrNull())
                 }
@@ -41,22 +36,18 @@ class MainViewModel : ViewModel(), XComponent.Injectable {
         }
     }
 
-    val isLoading by lazy {
-        MediatorLiveData<Boolean>().apply {
-            addSource(_rateHistoryResource) {
-                it?.let { value = it is Resource.Loading }
-            }
-        }
-    }
+    private val _isLoading = MutableLiveData<Boolean>()
+    val isLoading: LiveData<Boolean>
+        get() = _isLoading
 
     val isNoDataTextVisible by lazy {
         MediatorLiveData<Boolean>().apply {
-            addSource(_rateHistoryResource) {
+            /*addSource(_rateHistoryResource) {
                 it?.let {
                     val listEmpty = it.data?.isEmpty() ?: true
                     value = (it !is Resource.Loading) && listEmpty
                 }
-            }
+            }*/
         }
     }
 
@@ -65,7 +56,16 @@ class MainViewModel : ViewModel(), XComponent.Injectable {
     fun selectRelatedCurrency(currency: Currency) = repository.selectRelatedCurrency(currency)
 
     fun refreshHistory() {
-        rateHistoryProvider?.reload()
+        if (selectedCurrenciesLiveData.value != null) {
+            _isLoading.value = true
+            repository.fetchCurrentQuote(selectedCurrenciesLiveData.value!!.selection)
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .onErrorComplete()
+                    .subscribe {
+                        _isLoading.value = false
+                    }
+        }
     }
 
     fun swapCurrencies() {
@@ -76,21 +76,21 @@ class MainViewModel : ViewModel(), XComponent.Injectable {
         component.inject(this)
     }
 
-    private fun makeVOList(l: List<RateEntry>?): List<RateVO>? {
+    private fun makeVOList(l: List<QuoteEntry>?): List<QuoteVO>? {
         if (l == null) return null
 
-        val map = TreeMap<LocalDateTime, RateEntry>()
-        l.forEach { map.put(it.date, it) }
+        val map = TreeMap<LocalDateTime, QuoteEntry>()
+        l.forEach { map.put(it.dateTime, it) }
 
-        val result = mutableListOf<RateVO>()
+        val result = mutableListOf<QuoteVO>()
 
         var pointer = map.pollLastEntry()
         while (pointer != null) {
             val prev = map.lastEntry()
-            val thisRate = pointer.value.rate
-            val diff = if (prev != null) thisRate - prev.value.rate else 0f
+            val thisRate = pointer.value.price
+            val diff = if (prev != null) thisRate - prev.value.price else 0f
 
-            result.add(RateVO(thisRate, diff, pointer.value.date))
+            result.add(QuoteVO(thisRate, diff, pointer.value.dateTime))
             pointer = map.pollLastEntry()
         }
 
