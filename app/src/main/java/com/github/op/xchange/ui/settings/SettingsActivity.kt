@@ -6,7 +6,7 @@ import android.widget.Toast
 import com.github.op.xchange.R
 import com.github.op.xchange.XChangeApp
 import com.github.op.xchange.repository.XChangeRepository
-import com.github.op.xchange.ui.BaseActivity
+import com.github.op.xchange.util.BaseActivity
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
 import kotlinx.android.synthetic.main.activity_settings.*

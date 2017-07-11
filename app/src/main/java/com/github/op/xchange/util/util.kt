@@ -1,4 +1,4 @@
-package com.github.op.xchange
+package com.github.op.xchange.util
 
 import android.arch.persistence.room.TypeConverter
 import com.google.gson.TypeAdapter

@@ -1,12 +1,13 @@
 package com.github.op.xchange.ui.main
 
-import android.arch.lifecycle.*
+import android.arch.lifecycle.MediatorLiveData
+import android.arch.lifecycle.MutableLiveData
+import android.arch.lifecycle.Transformations
+import android.arch.lifecycle.ViewModel
 import com.github.op.xchange.entity.Currency
 import com.github.op.xchange.entity.QuoteEntry
 import com.github.op.xchange.injection.XComponent
 import com.github.op.xchange.repository.XChangeRepository
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.schedulers.Schedulers
 import org.threeten.bp.LocalDateTime
 import java.util.*
 import javax.inject.Inject
@@ -15,17 +16,28 @@ class MainViewModel : ViewModel(), XComponent.Injectable {
 
     @Inject lateinit var repository: XChangeRepository
 
-    private val _rawHistoryStream by lazy {
+    private val _rawQuotesStream by lazy {
         Transformations.switchMap(selectedCurrenciesStream) {
             repository.getQuoteHistory(it.selection)
         }
     }
 
-    val selectedCurrenciesStream by lazy { SelectedCurrenciesLiveData(this, repository) }
+    val selectedCurrenciesStream by lazy {
+        MediatorLiveData<SelectedCurrenciesVO>().apply {
+            this.addSource(repository.selectedCurrencyPair2) { selectedPair->
+                selectedPair?.let {
+                    val baseList = Currency.values().toList().filter { it.visible && selectedPair.related != it }
+                    val relList = Currency.values().toList().filter { it.visible && selectedPair.base != it }
+                    value = SelectedCurrenciesVO(baseList, relList, selectedPair)
+                    refreshHistory()
+                }
+            }
+        }
+    }
 
     val quotesStream by lazy {
         MediatorLiveData<Pair<List<QuoteVO>?, QuoteVO?>>().apply {
-            this.addSource(_rawHistoryStream) {
+            this.addSource(_rawQuotesStream) {
                 val list = makeVOList(it)
                 if (list != null) {
                     value = Pair(list, list.firstOrNull())
@@ -39,12 +51,12 @@ class MainViewModel : ViewModel(), XComponent.Injectable {
     val isNoDataTextVisible by lazy {
         MediatorLiveData<Boolean>().apply {
             fun updateNoDataTextStatus() {
-                val isEmpty = _rawHistoryStream.value?.isEmpty() ?: true
+                val isEmpty = _rawQuotesStream.value?.isEmpty() ?: true
                 val loading = isLoading.value ?: false
                 value = isEmpty && !loading
             }
 
-            addSource(_rawHistoryStream) { updateNoDataTextStatus() }
+            addSource(_rawQuotesStream) { updateNoDataTextStatus() }
             addSource(isLoading) { updateNoDataTextStatus() }
         }
     }

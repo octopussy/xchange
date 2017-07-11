@@ -1,9 +1,9 @@
 package com.github.op.xchange.repository
 
 import android.arch.lifecycle.LiveData
+import android.arch.lifecycle.MutableLiveData
 import android.support.annotation.WorkerThread
 import android.util.Log
-import com.f2prateek.rx.preferences2.Preference
 import com.f2prateek.rx.preferences2.RxSharedPreferences
 import com.github.op.xchange.api.QuoteDTO
 import com.github.op.xchange.api.QuotesApi
@@ -33,6 +33,20 @@ class XChangeRepositoryImpl(private val quotesApi: QuotesApi,
             selectBaseCurrency(Currency.USD)
             selectRelatedCurrency(Currency.RUB)
         }
+
+        val firstObs = baseCurrencyCode.asObservable()
+        val secondObs = relatedCurrencyCode.asObservable()
+        val combined: Observable<CurrencyPair> = Observable.combineLatest(firstObs, secondObs, BiFunction { t1, t2 ->
+            CurrencyPair(Currency.fromString(t1), Currency.fromString(t2))
+        })
+
+        combined.subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe({
+                    selectedCurrencyPair2.value = it
+                }, {
+                    Log.e("XChangeRepository", it.localizedMessage)
+                })
     }
 
     override val selectedCurrencyPair: Observable<CurrencyPair>
@@ -44,9 +58,7 @@ class XChangeRepositoryImpl(private val quotesApi: QuotesApi,
             })
         }
 
-    override val selectedCurrencyPair2: LiveData<CurrencyPair>
-        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
-
+    override val selectedCurrencyPair2 = MutableLiveData<CurrencyPair>()
 
     override fun getQuoteHistory(currencyPair: CurrencyPair): LiveData<List<QuoteEntry>>
             = db.quotesDao().getQuoteHistory(currencyPair.toString())

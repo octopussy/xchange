@@ -10,9 +10,9 @@ import android.widget.TextView
 import butterknife.BindView
 import butterknife.ButterKnife
 import com.github.op.xchange.R
-import com.github.op.xchange.asCurrencyValueString
-import com.github.op.xchange.formatDateTime
-import com.github.op.xchange.ui.visible
+import com.github.op.xchange.util.asCurrencyValueString
+import com.github.op.xchange.util.formatDateTime
+import com.github.op.xchange.util.visible
 
 class RateHistoryListAdapter(val context: Context) : RecyclerView.Adapter<RateHistoryListAdapter.VH>() {
 

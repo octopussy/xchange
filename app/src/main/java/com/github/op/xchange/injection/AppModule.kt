@@ -4,7 +4,7 @@ import android.arch.persistence.room.Room
 import android.content.Context
 import android.content.SharedPreferences
 import com.f2prateek.rx.preferences2.RxSharedPreferences
-import com.github.op.xchange.GsonLocalDateTimeTypeAdapter
+import com.github.op.xchange.util.GsonLocalDateTimeTypeAdapter
 import com.github.op.xchange.db.XChangeDatabase
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder

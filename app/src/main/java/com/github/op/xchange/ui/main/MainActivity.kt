@@ -10,13 +10,13 @@ import android.view.MenuItem
 import android.view.View
 import android.widget.AdapterView
 import com.github.op.xchange.R
-import com.github.op.xchange.asCurrencyValueString
+import com.github.op.xchange.util.asCurrencyValueString
 import com.github.op.xchange.entity.Currency
-import com.github.op.xchange.formatDateTime
+import com.github.op.xchange.util.formatDateTime
 import com.github.op.xchange.ui.ViewModelFactory
-import com.github.op.xchange.ui.BaseActivity
+import com.github.op.xchange.util.BaseActivity
 import com.github.op.xchange.ui.settings.SettingsActivity
-import com.github.op.xchange.ui.visible
+import com.github.op.xchange.util.visible
 import kotlinx.android.synthetic.main.activity_main.*
 
 

@@ -3,7 +3,7 @@ package com.github.op.xchange.db
 import android.arch.persistence.room.Database
 import android.arch.persistence.room.RoomDatabase
 import android.arch.persistence.room.TypeConverters
-import com.github.op.xchange.DbLocalDateTimeConverter
+import com.github.op.xchange.util.DbLocalDateTimeConverter
 import com.github.op.xchange.entity.QuoteEntry
 import com.github.op.xchange.dao.QuotesDao
 
