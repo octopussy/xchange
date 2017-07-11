@@ -1,13 +1,14 @@
-package com.github.op.xchange.ui.main
+package com.github.op.xchange.ui.viewModel
 
 import android.arch.lifecycle.MediatorLiveData
-import android.arch.lifecycle.MutableLiveData
 import android.arch.lifecycle.Transformations
 import android.arch.lifecycle.ViewModel
 import com.github.op.xchange.entity.Currency
 import com.github.op.xchange.entity.QuoteEntry
 import com.github.op.xchange.injection.XComponent
 import com.github.op.xchange.repository.XChangeRepository
+import com.github.op.xchange.ui.main.QuoteVO
+import com.github.op.xchange.ui.main.SelectedCurrenciesVO
 import org.threeten.bp.LocalDateTime
 import java.util.*
 import javax.inject.Inject
@@ -36,7 +37,7 @@ class MainViewModel : ViewModel(), XComponent.Injectable {
     }
 
     val quotesStream by lazy {
-        MediatorLiveData<Pair<List<QuoteVO>?, QuoteVO?>>().apply {
+        android.arch.lifecycle.MediatorLiveData<Pair<List<QuoteVO>?, QuoteVO?>>().apply {
             this.addSource(_rawQuotesStream) {
                 val list = makeVOList(it)
                 if (list != null) {
@@ -46,7 +47,7 @@ class MainViewModel : ViewModel(), XComponent.Injectable {
         }
     }
 
-    val isLoading = MutableLiveData<Boolean>()
+    val isLoading = android.arch.lifecycle.MutableLiveData<Boolean>()
 
     val isNoDataTextVisible by lazy {
         MediatorLiveData<Boolean>().apply {

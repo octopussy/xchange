@@ -10,13 +10,11 @@ import android.view.MenuItem
 import android.view.View
 import android.widget.AdapterView
 import com.github.op.xchange.R
-import com.github.op.xchange.util.asCurrencyValueString
 import com.github.op.xchange.entity.Currency
-import com.github.op.xchange.util.formatDateTime
 import com.github.op.xchange.ui.ViewModelFactory
-import com.github.op.xchange.util.BaseActivity
 import com.github.op.xchange.ui.settings.SettingsActivity
-import com.github.op.xchange.util.visible
+import com.github.op.xchange.ui.viewModel.MainViewModel
+import com.github.op.xchange.util.*
 import kotlinx.android.synthetic.main.activity_main.*
 
 
@@ -57,20 +55,14 @@ class MainActivity : BaseActivity() {
         rvAdapter = RateHistoryListAdapter(this)
         rvRateHistory.adapter = rvAdapter
 
-        baseCurrencySpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onNothingSelected(parent: AdapterView<*>?) {}
-
-            override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {
-                val item = parent.adapter.getItem(position)
+        baseCurrencySpinner.onItemSelectedListener = object : SpinnerItemSelectedListener() {
+            override fun itemSelected(item: Any?) {
                 viewModel.selectBaseCurrency(item as Currency)
             }
         }
 
-        relCurrencySpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onNothingSelected(parent: AdapterView<*>?) {}
-
-            override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {
-                val item = parent.adapter.getItem(position)
+        relCurrencySpinner.onItemSelectedListener = object : SpinnerItemSelectedListener() {
+            override fun itemSelected(item: Any?) {
                 viewModel.selectRelatedCurrency(item as Currency)
             }
         }
